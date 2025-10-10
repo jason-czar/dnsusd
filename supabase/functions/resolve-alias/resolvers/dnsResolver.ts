@@ -61,6 +61,11 @@ export class DNSResolver implements IAliasResolver {
             { regex: /crypto:btc=([a-zA-Z0-9]+)/i, currency: 'bitcoin' },
             { regex: /crypto:eth=(0x[a-fA-F0-9]{40})/i, currency: 'ethereum' },
             
+            // OpenAttestation / recipient_address patterns
+            { regex: /recipient_address=(0x[a-fA-F0-9]{40})/i, currency: 'ethereum' },
+            { regex: /oa1:eth.*recipient_address=(0x[a-fA-F0-9]{40})/i, currency: 'ethereum' },
+            { regex: /oa1:ethereum.*recipient_address=(0x[a-fA-F0-9]{40})/i, currency: 'ethereum' },
+            
             // PayString-like patterns
             { regex: /\$([a-z]+)\/([a-zA-Z0-9.]+)/i, currency: 'various' },
           ];
