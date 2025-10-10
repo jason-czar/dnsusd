@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      alias_history: {
+        Row: {
+          address: string
+          alias_id: string
+          confidence: number | null
+          currency: string
+          id: string
+          raw_data: Json | null
+          resolved_at: string
+          source_type: string
+        }
+        Insert: {
+          address: string
+          alias_id: string
+          confidence?: number | null
+          currency: string
+          id?: string
+          raw_data?: Json | null
+          resolved_at?: string
+          source_type: string
+        }
+        Update: {
+          address?: string
+          alias_id?: string
+          confidence?: number | null
+          currency?: string
+          id?: string
+          raw_data?: Json | null
+          resolved_at?: string
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alias_history_alias_id_fkey"
+            columns: ["alias_id"]
+            isOneToOne: false
+            referencedRelation: "aliases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aliases: {
+        Row: {
+          alias_string: string
+          created_at: string
+          current_address: string | null
+          current_currency: string | null
+          current_source: string | null
+          id: string
+          last_resolved_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          alias_string: string
+          created_at?: string
+          current_address?: string | null
+          current_currency?: string | null
+          current_source?: string | null
+          id?: string
+          last_resolved_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alias_string?: string
+          created_at?: string
+          current_address?: string | null
+          current_currency?: string | null
+          current_source?: string | null
+          id?: string
+          last_resolved_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lookups: {
         Row: {
           alias: string
@@ -49,6 +123,44 @@ export type Database = {
           resolved_address?: string | null
         }
         Relationships: []
+      }
+      webhooks: {
+        Row: {
+          alias_id: string
+          callback_url: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          secret_token: string
+        }
+        Insert: {
+          alias_id: string
+          callback_url: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          secret_token: string
+        }
+        Update: {
+          alias_id?: string
+          callback_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          secret_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhooks_alias_id_fkey"
+            columns: ["alias_id"]
+            isOneToOne: false
+            referencedRelation: "aliases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

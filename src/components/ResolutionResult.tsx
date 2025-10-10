@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, CheckCircle2, XCircle, Info } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import type { ResolverResult } from "@/types/resolver";
+import type { ResolverResult, ResolvedResult } from "@/types/resolver";
 
 interface ResolutionResultProps {
   result: ResolverResult;
@@ -32,9 +32,8 @@ export const ResolutionResult = ({ result }: ResolutionResultProps) => {
     }
   };
 
-  const getConfidenceBadge = (confidence: string | null) => {
-    if (!confidence) return null;
-    
+  const getConfidenceBadge = (confidence: number) => {
+    const level = confidence >= 0.9 ? 'high' : confidence >= 0.7 ? 'medium' : 'low';
     const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
       high: 'default',
       medium: 'secondary',
@@ -42,8 +41,8 @@ export const ResolutionResult = ({ result }: ResolutionResultProps) => {
     };
 
     return (
-      <Badge variant={variants[confidence] || 'secondary'} className="capitalize">
-        {confidence} Confidence
+      <Badge variant={variants[level]} className="capitalize">
+        {level} Confidence ({Math.round(confidence * 100)}%)
       </Badge>
     );
   };
@@ -64,7 +63,7 @@ export const ResolutionResult = ({ result }: ResolutionResultProps) => {
     );
   }
 
-  if (!result.resolvedAddress) {
+  if (!result.chosen) {
     return (
       <Card className="border-muted">
         <CardHeader>
@@ -92,12 +91,9 @@ export const ResolutionResult = ({ result }: ResolutionResultProps) => {
             <CardDescription>Found wallet address for {result.alias}</CardDescription>
           </div>
           <div className="flex gap-2">
-            {result.aliasType && (
-              <Badge variant="outline" className="capitalize">
-                {result.aliasType}
-              </Badge>
-            )}
-            {getConfidenceBadge(result.confidence)}
+            {result.cached && <Badge variant="outline">Cached</Badge>}
+            <Badge variant="outline" className="capitalize">{result.chosen.source_type}</Badge>
+            {getConfidenceBadge(result.chosen.confidence)}
           </div>
         </div>
       </CardHeader>
@@ -106,64 +102,36 @@ export const ResolutionResult = ({ result }: ResolutionResultProps) => {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground">Resolved Address:</span>
-            <span className="text-xs text-muted-foreground uppercase">{result.chain}</span>
+            <span className="text-xs text-muted-foreground uppercase">{result.chosen.currency}</span>
           </div>
           <div className="flex gap-2">
             <div className="flex-1 p-3 rounded-lg bg-background border border-border overflow-x-auto">
-              <code className="mono text-sm text-foreground break-all">{result.resolvedAddress}</code>
+              <code className="mono text-sm text-foreground break-all">{result.chosen.address}</code>
             </div>
             <Button
               variant="outline"
               size="icon"
-              onClick={() => copyToClipboard(result.resolvedAddress!)}
+              onClick={() => copyToClipboard(result.chosen.address)}
               className="shrink-0"
             >
-              {copied ? (
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
+              {copied ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
             </Button>
           </div>
         </div>
 
+        {/* Conflict Warning */}
+        {result.sources_conflict && (
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/50">
+            <p className="text-sm text-destructive">⚠️ Multiple conflicting sources found. Showing highest confidence result.</p>
+          </div>
+        )}
+
         {/* Proof Metadata */}
-        {result.proofMetadata && Object.keys(result.proofMetadata).length > 0 && (
+        {result.chosen.raw_data && Object.keys(result.chosen.raw_data).length > 0 && (
           <div className="space-y-2 pt-4 border-t border-border">
             <span className="text-sm font-medium text-muted-foreground">Proof Metadata:</span>
             <div className="p-3 rounded-lg bg-background border border-border">
-              <div className="space-y-2">
-                {result.proofMetadata.source && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Source:</span>
-                    <span className="mono">{result.proofMetadata.source}</span>
-                  </div>
-                )}
-                {result.proofMetadata.recordType && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Record Type:</span>
-                    <span className="mono">{result.proofMetadata.recordType}</span>
-                  </div>
-                )}
-                {result.proofMetadata.dnsRecords && result.proofMetadata.dnsRecords.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-sm text-muted-foreground">DNS Records:</span>
-                    {result.proofMetadata.dnsRecords.map((record, idx) => (
-                      <div key={idx} className="mono text-xs p-2 rounded bg-muted break-all">
-                        {record}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {result.proofMetadata.ensResolver && (
-                  <div className="space-y-1">
-                    <span className="text-sm text-muted-foreground">ENS Resolver:</span>
-                    <div className="mono text-xs p-2 rounded bg-muted break-all">
-                      {result.proofMetadata.ensResolver}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <pre className="mono text-xs overflow-x-auto">{JSON.stringify(result.chosen.raw_data, null, 2)}</pre>
             </div>
           </div>
         )}
