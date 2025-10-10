@@ -47,7 +47,7 @@ export const ResolutionResult = ({ result }: ResolutionResultProps) => {
     );
   };
 
-  if (result.errorMessage) {
+  if (result.error) {
     return (
       <Card className="border-destructive/50 bg-destructive/5">
         <CardHeader>
@@ -57,7 +57,7 @@ export const ResolutionResult = ({ result }: ResolutionResultProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">{result.errorMessage}</p>
+          <p className="text-muted-foreground">{result.error}</p>
         </CardContent>
       </Card>
     );
