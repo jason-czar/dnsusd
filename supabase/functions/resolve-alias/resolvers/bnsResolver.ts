@@ -14,7 +14,9 @@ export class BNSResolver implements IAliasResolver {
 
   canResolve(alias: string): boolean {
     // BNS names are in format: name.namespace (e.g., muneeb.id, alice.btc)
-    return alias.includes('.') && !alias.endsWith('.eth') && !alias.endsWith('.crypto');
+    // Common BNS namespaces: .id, .btc, .blockchain
+    const bnsNamespaces = ['.id', '.btc', '.blockchain', '.stacks'];
+    return bnsNamespaces.some(ns => alias.toLowerCase().endsWith(ns));
   }
 
   async resolve(alias: string, chain?: string): Promise<ResolvedResult[]> {

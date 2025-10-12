@@ -11,8 +11,10 @@ export class WellKnownResolver implements IAliasResolver {
   }
 
   canResolve(alias: string): boolean {
-    // Match domain-like strings
-    return /^[a-z0-9][a-z0-9-]*\.[a-z0-9.-]+$/i.test(alias);
+    // Match domain-like strings but with lower priority
+    // Only match domains with common TLDs that aren't handled by other resolvers
+    const commonTLDs = ['.com', '.org', '.net', '.io', '.dev', '.app', '.xyz'];
+    return commonTLDs.some(tld => alias.toLowerCase().endsWith(tld));
   }
 
   async resolve(alias: string, chain?: string): Promise<ResolvedResult[]> {

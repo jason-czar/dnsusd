@@ -11,8 +11,9 @@ export class WebFingerResolver implements IAliasResolver {
   }
 
   canResolve(alias: string): boolean {
-    // WebFinger uses acct: scheme or email-like identifiers
-    return alias.startsWith('acct:') || /^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(alias);
+    // WebFinger uses acct: scheme - only resolve if explicitly marked
+    // Don't conflict with email-like patterns used by Lightning/Nostr
+    return alias.startsWith('acct:');
   }
 
   async resolve(alias: string, chain?: string): Promise<ResolvedResult[]> {

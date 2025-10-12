@@ -12,6 +12,8 @@ export class NostrResolver implements IAliasResolver {
 
   canResolve(alias: string): boolean {
     // NIP-05 format: user@domain
+    // Avoid conflicting with Lightning addresses - both use same format
+    // Nostr resolver will run but with lower priority
     return /^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(alias);
   }
 

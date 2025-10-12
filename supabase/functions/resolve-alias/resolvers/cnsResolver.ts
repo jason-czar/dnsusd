@@ -28,8 +28,14 @@ export class CNSResolver implements IAliasResolver {
     const handle = alias.startsWith('$') ? alias.substring(1) : alias.replace('.ada', '');
     
     try {
+      // Convert handle to hex using TextEncoder (Deno compatible)
+      const encoder = new TextEncoder();
+      const assetNameBytes = encoder.encode(handle);
+      const assetName = Array.from(assetNameBytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
       // Query Cardano blockchain via Koios API
-      const assetName = Buffer.from(handle).toString('hex');
       const response = await fetch(
         `https://api.koios.rest/api/v1/asset_address_list?_asset_policy=${this.ADA_HANDLE_POLICY}&_asset_name=${assetName}`
       );

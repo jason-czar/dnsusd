@@ -13,9 +13,13 @@ export class HandshakeResolver implements IAliasResolver {
   }
 
   canResolve(alias: string): boolean {
-    // Handshake domains don't have a TLD - they ARE the TLD
-    // Look for domains without traditional TLDs or with / suffix
-    return !alias.includes('.') || alias.endsWith('/');
+    // Handshake domains are single-word TLDs without dots (unless explicitly marked with /)
+    // Avoid conflicting with other resolvers by checking for HNS-specific patterns
+    // Only resolve if explicitly marked with / or if it's a single word without common TLDs
+    if (alias.endsWith('/')) return true;
+    if (alias.includes('.')) return false;
+    // Single word domains could be HNS
+    return alias.length > 0 && /^[a-z0-9-]+$/.test(alias);
   }
 
   async resolve(alias: string, chain?: string): Promise<ResolvedResult[]> {
