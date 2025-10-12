@@ -9,19 +9,37 @@ import { ENSResolver } from './resolvers/ensResolver.ts';
 import { LightningResolver } from './resolvers/lightningResolver.ts';
 import { PayStringResolver } from './resolvers/payStringResolver.ts';
 import { FIOResolver } from './resolvers/fioResolver.ts';
+import { UnstoppableDomainsResolver } from './resolvers/unstoppableDomainsResolver.ts';
+import { HandshakeResolver } from './resolvers/handshakeResolver.ts';
+import { NamecoinResolver } from './resolvers/namecoinResolver.ts';
+import { BNSResolver } from './resolvers/bnsResolver.ts';
+import { ZNSResolver } from './resolvers/znsResolver.ts';
+import { CNSResolver } from './resolvers/cnsResolver.ts';
+import { NostrResolver } from './resolvers/nostrResolver.ts';
+import { WebFingerResolver } from './resolvers/webfingerResolver.ts';
+import { WellKnownResolver } from './resolvers/wellKnownResolver.ts';
 import { resolverCache } from './cache.ts';
 
 export class ResolutionOrchestrator {
   private resolvers: IAliasResolver[];
 
   constructor() {
-    // Initialize all resolver modules
+    // Initialize all resolver modules (ordered by priority)
     this.resolvers = [
-      new ENSResolver(),        // Highest priority
-      new DNSResolver(),        // Medium priority
-      new LightningResolver(),  // Lower priority (stub)
-      new PayStringResolver(),  // Lower priority (stub)
-      new FIOResolver()         // Lower priority (stub)
+      new ENSResolver(),                  // Highest priority - Ethereum
+      new UnstoppableDomainsResolver(),   // High priority - Multi-chain
+      new CNSResolver(),                  // High priority - Cardano handles
+      new DNSResolver(),                  // Medium-high priority - DNS TXT
+      new NostrResolver(),                // Medium priority - Nostr NIP-05
+      new LightningResolver(),            // Medium priority - Lightning addresses
+      new BNSResolver(),                  // Medium priority - Stacks/Bitcoin
+      new ZNSResolver(),                  // Medium priority - Zilliqa
+      new HandshakeResolver(),            // Lower priority - HNS
+      new NamecoinResolver(),             // Lower priority - Namecoin .bit
+      new WebFingerResolver(),            // Lower priority - WebFinger/OpenID
+      new WellKnownResolver(),            // Lowest priority - Generic .well-known
+      new PayStringResolver(),            // Stub
+      new FIOResolver()                   // Stub
     ];
   }
 

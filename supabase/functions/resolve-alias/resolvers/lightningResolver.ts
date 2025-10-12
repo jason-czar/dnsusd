@@ -30,21 +30,68 @@ export class LightningResolver implements IAliasResolver {
   }
 
   async resolve(alias: string, chain?: string): Promise<ResolvedResult[]> {
-    console.log(`[LightningResolver] STUB - Would resolve ${alias}`);
+    console.log(`[LightningResolver] Resolving ${alias}`);
     
     // Filter by chain if specified
     if (chain && chain !== 'all' && chain !== 'lightning' && chain !== 'bitcoin') {
       return [];
     }
 
-    // STUB: Return empty array
-    // Real implementation would:
-    // 1. Parse user@domain
-    // 2. Fetch https://domain/.well-known/lnurlp/user
-    // 3. Parse response and extract callback URL
-    // 4. Validate and return Lightning destination
+    const results: ResolvedResult[] = [];
     
-    console.log('[LightningResolver] Not yet implemented - requires LNURL protocol integration');
-    return [];
+    // Handle LNURL format
+    if (alias.toLowerCase().startsWith('lnurl')) {
+      // LNURL decoding would go here
+      console.log('[LightningResolver] LNURL decoding not yet implemented');
+      return [];
+    }
+
+    // Handle Lightning address (user@domain)
+    const [username, domain] = alias.split('@');
+    if (!username || !domain) {
+      return [];
+    }
+
+    try {
+      // Fetch LNURLP endpoint
+      const response = await fetch(
+        `https://${domain}/.well-known/lnurlp/${encodeURIComponent(username)}`
+      );
+
+      if (!response.ok) {
+        console.log(`[LightningResolver] Endpoint returned ${response.status}`);
+        return [];
+      }
+
+      const data = await response.json();
+      
+      if (data.callback) {
+        // Extract metadata
+        const metadata = data.metadata ? JSON.parse(data.metadata) : {};
+        const identifier = metadata.find((m: any[]) => m[0] === 'text/identifier')?.[1] || alias;
+
+        results.push({
+          source_type: 'lightning_address',
+          currency: 'lightning',
+          address: alias,
+          raw_data: {
+            callback: data.callback,
+            minSendable: data.minSendable,
+            maxSendable: data.maxSendable,
+            metadata: data.metadata,
+            identifier,
+            tag: data.tag,
+          },
+          confidence: 0.93,
+        });
+
+        console.log(`[LightningResolver] Resolved Lightning address ${alias}`);
+      }
+      
+    } catch (error) {
+      console.error(`[LightningResolver] Error:`, error);
+    }
+
+    return results;
   }
 }
