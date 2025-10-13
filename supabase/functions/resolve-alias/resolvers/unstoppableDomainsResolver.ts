@@ -21,13 +21,13 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
   }
 
   async resolve(alias: string, chain?: string): Promise<ResolvedResult[]> {
-    console.log(`[UnstoppableDomainsResolver] Resolving ${alias}`);
+    console.log(`[UnstoppableDomainsResolver] Resolving ${alias} for chain: ${chain || 'all'}`);
     
     const results: ResolvedResult[] = [];
     
     try {
-      // First try resolution endpoint for crypto records
-      const resolutionResponse = await fetch(
+      // Call Unstoppable Domains resolution API
+      const response = await fetch(
         `https://api.unstoppabledomains.com/resolve/domains/${encodeURIComponent(alias)}`,
         {
           headers: {
@@ -36,65 +36,69 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
         }
       );
 
-      let records: any = {};
-      
-      if (resolutionResponse.ok) {
-        const resolutionData = await resolutionResponse.json();
-        console.log(`[UnstoppableDomainsResolver] Resolution data:`, JSON.stringify(resolutionData));
-        records = resolutionData.records || {};
-      } else {
-        console.log(`[UnstoppableDomainsResolver] Resolution API returned ${resolutionResponse.status}, trying metadata`);
-        
-        // Fallback to metadata endpoint (works without auth)
-        const metadataResponse = await fetch(
-          `https://api.unstoppabledomains.com/metadata/${encodeURIComponent(alias)}`
-        );
-        
-        if (metadataResponse.ok) {
-          const metadataData = await metadataResponse.json();
-          console.log(`[UnstoppableDomainsResolver] Metadata data:`, JSON.stringify(metadataData));
-          records = metadataData.records || {};
-        }
+      if (!response.ok) {
+        console.log(`[UnstoppableDomainsResolver] API returned ${response.status}: ${response.statusText}`);
+        return [];
       }
 
-      // Map of record keys to currencies
+      const data = await response.json();
+      console.log(`[UnstoppableDomainsResolver] API Response:`, JSON.stringify(data, null, 2));
+      
+      const records = data.records || {};
+      const recordKeys = Object.keys(records);
+      console.log(`[UnstoppableDomainsResolver] Found ${recordKeys.length} records:`, recordKeys);
+
+      // Map of record keys to currencies - based on UD documentation
       const currencyMap: Record<string, string> = {
         'crypto.BTC.address': 'bitcoin',
         'crypto.ETH.address': 'ethereum',
         'crypto.USDT.version.ERC20.address': 'ethereum',
+        'crypto.USDC.version.ERC20.address': 'ethereum',
         'crypto.ADA.address': 'cardano',
         'crypto.SOL.address': 'solana',
         'crypto.MATIC.address': 'polygon',
-        'wallet.address': 'ethereum', // Generic wallet address
+        'crypto.MATIC.version.MATIC.address': 'polygon',
+        'crypto.AVAX.version.C.address': 'avalanche',
+        'crypto.DOT.address': 'polkadot',
+        'crypto.LTC.address': 'litecoin',
+        'crypto.DOGE.address': 'dogecoin',
+        'crypto.XRP.address': 'ripple',
       };
 
-      // Check if domain exists but has no crypto records
-      if (Object.keys(records).length > 0) {
-        console.log(`[UnstoppableDomainsResolver] Found ${Object.keys(records).length} total records`);
-      }
-
-      for (const [key, currency] of Object.entries(currencyMap)) {
-        if (records[key]) {
+      // Process each currency mapping
+      for (const [recordKey, currency] of Object.entries(currencyMap)) {
+        const address = records[recordKey];
+        
+        if (address && typeof address === 'string' && address.trim() !== '') {
           // Filter by chain if specified
           if (chain && chain !== 'all' && currency !== chain.toLowerCase()) {
+            console.log(`[UnstoppableDomainsResolver] Skipping ${currency} (filtering for ${chain})`);
             continue;
           }
 
+          console.log(`[UnstoppableDomainsResolver] Found ${currency} address: ${address}`);
+          
           results.push({
             source_type: 'unstoppable_domains',
             currency,
-            address: records[key],
+            address: address.trim(),
             raw_data: {
               domain: alias,
-              record_key: key,
+              record_key: recordKey,
+              blockchain: data.meta?.blockchain,
+              owner: data.meta?.owner,
               all_records: records,
             },
-            confidence: 0.9, // High confidence for UD
+            confidence: 0.95, // High confidence for UD
           });
         }
       }
 
-      console.log(`[UnstoppableDomainsResolver] Found ${results.length} addresses`);
+      if (results.length === 0 && recordKeys.length > 0) {
+        console.log(`[UnstoppableDomainsResolver] Domain exists but no crypto addresses found. Available records:`, recordKeys);
+      }
+
+      console.log(`[UnstoppableDomainsResolver] Returning ${results.length} crypto address(es)`);
       
     } catch (error) {
       console.error(`[UnstoppableDomainsResolver] Error:`, error);
