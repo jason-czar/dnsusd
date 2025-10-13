@@ -26,9 +26,9 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
     const results: ResolvedResult[] = [];
     
     try {
-      // Use Unstoppable Domains Resolution API
+      // Use Unstoppable Domains Metadata API
       const response = await fetch(
-        `https://api.unstoppabledomains.com/resolve/domains/${encodeURIComponent(alias)}`,
+        `https://api.unstoppabledomains.com/metadata/${encodeURIComponent(alias)}`,
         {
           headers: {
             'Authorization': `Bearer ${Deno.env.get('UNSTOPPABLE_API_KEY') || ''}`,
@@ -42,8 +42,9 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
       }
 
       const data = await response.json();
+      console.log(`[UnstoppableDomainsResolver] Response data:`, JSON.stringify(data));
       
-      // Extract crypto addresses from records
+      // Extract crypto addresses from records if available
       const records = data.records || {};
       
       // Map of record keys to currencies
@@ -71,7 +72,7 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
               domain: alias,
               record_key: key,
               all_records: records,
-              meta: data.meta,
+              metadata: data,
             },
             confidence: 0.9, // High confidence for UD
           });
