@@ -26,9 +26,9 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
     const results: ResolvedResult[] = [];
     
     try {
-      // Use Unstoppable Domains Metadata API
-      const response = await fetch(
-        `https://api.unstoppabledomains.com/metadata/${encodeURIComponent(alias)}`,
+      // First try resolution endpoint for crypto records
+      const resolutionResponse = await fetch(
+        `https://api.unstoppabledomains.com/resolve/domains/${encodeURIComponent(alias)}`,
         {
           headers: {
             'Authorization': `Bearer ${Deno.env.get('UNSTOPPABLE_API_KEY') || ''}`,
@@ -36,17 +36,27 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
         }
       );
 
-      if (!response.ok) {
-        console.log(`[UnstoppableDomainsResolver] API returned ${response.status}`);
-        return [];
+      let records: any = {};
+      
+      if (resolutionResponse.ok) {
+        const resolutionData = await resolutionResponse.json();
+        console.log(`[UnstoppableDomainsResolver] Resolution data:`, JSON.stringify(resolutionData));
+        records = resolutionData.records || {};
+      } else {
+        console.log(`[UnstoppableDomainsResolver] Resolution API returned ${resolutionResponse.status}, trying metadata`);
+        
+        // Fallback to metadata endpoint (works without auth)
+        const metadataResponse = await fetch(
+          `https://api.unstoppabledomains.com/metadata/${encodeURIComponent(alias)}`
+        );
+        
+        if (metadataResponse.ok) {
+          const metadataData = await metadataResponse.json();
+          console.log(`[UnstoppableDomainsResolver] Metadata data:`, JSON.stringify(metadataData));
+          records = metadataData.records || {};
+        }
       }
 
-      const data = await response.json();
-      console.log(`[UnstoppableDomainsResolver] Response data:`, JSON.stringify(data));
-      
-      // Extract crypto addresses from records if available
-      const records = data.records || {};
-      
       // Map of record keys to currencies
       const currencyMap: Record<string, string> = {
         'crypto.BTC.address': 'bitcoin',
@@ -55,7 +65,13 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
         'crypto.ADA.address': 'cardano',
         'crypto.SOL.address': 'solana',
         'crypto.MATIC.address': 'polygon',
+        'wallet.address': 'ethereum', // Generic wallet address
       };
+
+      // Check if domain exists but has no crypto records
+      if (Object.keys(records).length > 0) {
+        console.log(`[UnstoppableDomainsResolver] Found ${Object.keys(records).length} total records`);
+      }
 
       for (const [key, currency] of Object.entries(currencyMap)) {
         if (records[key]) {
@@ -72,7 +88,6 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
               domain: alias,
               record_key: key,
               all_records: records,
-              metadata: data,
             },
             confidence: 0.9, // High confidence for UD
           });
