@@ -28,7 +28,7 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
     try {
       // Use Unstoppable Domains Resolution API
       const response = await fetch(
-        `https://resolve.unstoppabledomains.com/domains/${encodeURIComponent(alias)}`,
+        `https://api.unstoppabledomains.com/resolve/domains/${encodeURIComponent(alias)}`,
         {
           headers: {
             'Authorization': `Bearer ${Deno.env.get('UNSTOPPABLE_API_KEY') || ''}`,
@@ -71,6 +71,7 @@ export class UnstoppableDomainsResolver implements IAliasResolver {
               domain: alias,
               record_key: key,
               all_records: records,
+              meta: data.meta,
             },
             confidence: 0.9, // High confidence for UD
           });
