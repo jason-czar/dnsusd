@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ResolverForm } from "@/components/ResolverForm";
 import { ResolutionResult } from "@/components/ResolutionResult";
 import { Shield, Zap } from "lucide-react";
@@ -92,8 +93,14 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border/50 mt-20">
-        <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
-          <p>AliasResolve v0 - Built for crypto alias resolution</p>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <p>AliasResolve v0 - Built for crypto alias resolution</p>
+            <div className="flex gap-6">
+              <Link to="/tos" className="hover:text-foreground transition-smooth">Terms of Service</Link>
+              <Link to="/policy" className="hover:text-foreground transition-smooth">Privacy Policy</Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
