@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2 } from "lucide-react";
+import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
@@ -83,7 +83,7 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/")}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -134,6 +134,24 @@ export default function Dashboard() {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/usage")}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart className="h-5 w-5" />
+                  Usage & Billing
+                </CardTitle>
+                <CardDescription>
+                  Track API consumption
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  View Usage
+                </Button>
+              </CardContent>
+            </Card>
+
             <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/docs/api")}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

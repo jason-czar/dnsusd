@@ -36,6 +36,10 @@ function checkRateLimit(identifier: string, limit: number = 100, windowMs: numbe
 }
 
 serve(async (req) => {
+  const startTime = Date.now();
+  let statusCode = 200;
+  let errorMessage: string | null = null;
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -184,6 +188,44 @@ serve(async (req) => {
       // Don't fail the request if DB fails
     }
 
+    // Track API usage
+    const responseTime = Date.now() - startTime;
+    const authHeader = req.headers.get('authorization');
+    let userId = null;
+    
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data: { user } } = await supabase.auth.getUser(token);
+        userId = user?.id || null;
+      } catch (e) {
+        console.log('[Main] Could not extract user from token');
+      }
+    }
+
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      await supabase.from('api_usage').insert({
+        user_id: userId,
+        endpoint: '/resolve-alias',
+        method: req.method,
+        status_code: statusCode,
+        response_time_ms: responseTime,
+        error_message: errorMessage,
+        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+        user_agent: req.headers.get('user-agent') || 'unknown'
+      });
+    } catch (usageError) {
+      console.error('[Main] Usage tracking error:', usageError);
+      // Don't fail the request if usage tracking fails
+    }
+
     // Return result
     return new Response(
       JSON.stringify(result),
@@ -194,7 +236,45 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[Main] Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    statusCode = 500;
+    errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+    // Track failed API usage
+    const responseTime = Date.now() - startTime;
+    const authHeader = req.headers.get('authorization');
+    let userId = null;
+    
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data: { user } } = await supabase.auth.getUser(token);
+        userId = user?.id || null;
+      } catch (e) {
+        console.log('[Main] Could not extract user from token');
+      }
+    }
+
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      await supabase.from('api_usage').insert({
+        user_id: userId,
+        endpoint: '/resolve-alias',
+        method: req.method,
+        status_code: statusCode,
+        response_time_ms: responseTime,
+        error_message: errorMessage,
+        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+        user_agent: req.headers.get('user-agent') || 'unknown'
+      });
+    } catch (usageError) {
+      console.error('[Main] Usage tracking error:', usageError);
+    }
     
     return new Response(
       JSON.stringify({ 
