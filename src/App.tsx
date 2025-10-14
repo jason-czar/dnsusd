@@ -28,6 +28,7 @@ import Billing from "./pages/Billing";
 import Organizations from "./pages/Organizations";
 import OrganizationNew from "./pages/OrganizationNew";
 import OrganizationMembers from "./pages/OrganizationMembers";
+import OrganizationSettings from "./pages/OrganizationSettings";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/organizations" element={<Organizations />} />
             <Route path="/organizations/new" element={<OrganizationNew />} />
             <Route path="/organizations/:organizationId/members" element={<OrganizationMembers />} />
+            <Route path="/organizations/:organizationId/settings" element={<OrganizationSettings />} />
             <Route path="/docs/api" element={<ApiDocs />} />
             <Route path="/docs/sdk" element={<SdkDocs />} />
             <Route path="/docs/webhooks" element={<WebhookTester />} />

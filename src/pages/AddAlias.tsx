@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Copy, Check, Loader2 } from "lucide-react";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 export default function AddAlias() {
   const navigate = useNavigate();
+  const { currentOrganization, isPersonalContext } = useOrganization();
   const [step, setStep] = useState(1);
   const [domain, setDomain] = useState("");
   const [verificationMethod, setVerificationMethod] = useState<"dns" | "https" | "both">("dns");
@@ -65,15 +67,22 @@ export default function AddAlias() {
       }
 
       // Create the alias record
+      const aliasInsert: any = {
+        alias_string: domain,
+        user_id: user.id,
+        verification_method: verificationMethod,
+        current_currency: walletAddresses[0]?.chain || null,
+        current_address: walletAddresses[0]?.address || null,
+      };
+
+      // Add organization_id if in organization context
+      if (!isPersonalContext && currentOrganization) {
+        aliasInsert.organization_id = currentOrganization.id;
+      }
+
       const { data: aliasData, error: aliasError } = await supabase
         .from("aliases")
-        .insert({
-          alias_string: domain,
-          user_id: user.id,
-          verification_method: verificationMethod,
-          current_currency: walletAddresses[0]?.chain || null,
-          current_address: walletAddresses[0]?.address || null,
-        })
+        .insert(aliasInsert)
         .select()
         .single();
 

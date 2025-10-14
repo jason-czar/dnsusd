@@ -15,6 +15,8 @@ import { TrustScoreBadge } from "@/components/TrustScoreBadge";
 import { Plus, Search, RefreshCw, Trash2, Eye, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { Badge } from "@/components/ui/badge";
 
 interface Alias {
   id: string;
@@ -31,10 +33,12 @@ interface Alias {
 
 export default function AliasesList() {
   const navigate = useNavigate();
+  const { currentOrganization, isPersonalContext } = useOrganization();
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -55,11 +59,26 @@ export default function AliasesList() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from("aliases")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      // Build query based on context
+      let query = supabase.from("aliases").select("*");
+      
+      if (isPersonalContext) {
+        query = query.eq("user_id", user.id).is("organization_id", null);
+      } else if (currentOrganization) {
+        query = query.eq("organization_id", currentOrganization.id);
+        
+        // Get user's role in organization
+        const { data: memberData } = await supabase
+          .from("organization_members")
+          .select("role")
+          .eq("organization_id", currentOrganization.id)
+          .eq("user_id", user.id)
+          .single();
+        
+        setUserRole(memberData?.role || null);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       setAliases(data || []);
@@ -105,8 +124,15 @@ export default function AliasesList() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">My Aliases</h1>
-            <p className="text-muted-foreground">Manage your domain aliases and wallet addresses</p>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-bold">
+                {isPersonalContext ? "My Aliases" : currentOrganization?.name + " Aliases"}
+              </h1>
+              {!isPersonalContext && userRole && (
+                <Badge variant="secondary">{userRole}</Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground">Manage domain aliases and wallet addresses</p>
           </div>
           <Button onClick={() => navigate("/dashboard")}>
             Back to Dashboard
@@ -201,14 +227,16 @@ export default function AliasesList() {
                     >
                       <RefreshCw size={16} />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(alias.id)}
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
+                    {(isPersonalContext || userRole === "owner" || userRole === "admin" || userRole === "member") && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(alias.id)}
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    )}
                   </div>
                     </TableCell>
                   </TableRow>
