@@ -270,24 +270,30 @@ export type Database = {
       }
       profiles: {
         Row: {
+          api_preferences: Json | null
           created_at: string
           display_name: string | null
           email: string | null
           id: string
+          notification_preferences: Json | null
           updated_at: string
         }
         Insert: {
+          api_preferences?: Json | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id: string
+          notification_preferences?: Json | null
           updated_at?: string
         }
         Update: {
+          api_preferences?: Json | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
+          notification_preferences?: Json | null
           updated_at?: string
         }
         Relationships: []
