@@ -86,7 +86,7 @@ serve(async (req: Request) => {
           const record = openAliasRecords[0].data.replace(/"/g, "");
           if (
             record.includes(`recipient_address=${expectedAddress}`) &&
-            record.includes(`recipient_name=${expectedCurrency}`)
+            record.includes(`recipient_name=${domain}`)
           ) {
             result.dns_verified = true;
           }
@@ -123,7 +123,7 @@ serve(async (req: Request) => {
         // Check if content contains the expected address
         if (
           content.includes(expectedAddress) &&
-          content.includes(expectedCurrency)
+          content.includes(domain)
         ) {
           result.https_verified = true;
         }
