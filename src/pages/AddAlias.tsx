@@ -46,24 +46,11 @@ export default function AddAlias() {
       .map((w) => `oa1:${w.chain} recipient_address=${w.address}; recipient_name=${domain};`);
   };
 
-  const generateJSONExample = () => {
-    const addresses: { [key: string]: string } = {};
-    walletAddresses.forEach((w) => {
-      if (w.chain && w.address) {
-        addresses[w.chain] = w.address;
-      }
-    });
-    
-    return JSON.stringify(
-      {
-        version: "1.0",
-        addresses,
-        domain,
-        timestamp: new Date().toISOString(),
-      },
-      null,
-      2
-    );
+  const generateOpenAliasText = () => {
+    return walletAddresses
+      .filter((w) => w.chain && w.address)
+      .map((w) => `oa1:${w.chain} recipient_address=${w.address}; recipient_name=${domain};`)
+      .join('\n');
   };
 
   const handleVerify = async () => {
@@ -268,21 +255,21 @@ export default function AddAlias() {
             {(verificationMethod === "https" || verificationMethod === "both") && (
               <Card>
                 <CardHeader>
-                  <CardTitle>HTTPS JSON File Setup</CardTitle>
+                  <CardTitle>HTTPS File Setup</CardTitle>
                   <CardDescription>
-                    Create a file at https://{domain}/.well-known/alias.json with this content
+                    Create a file at https://{domain}/.well-known/openalias.txt with this content
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="bg-muted p-3 rounded font-mono text-sm relative">
-                    <pre>{generateJSONExample()}</pre>
+                    <pre>{generateOpenAliasText()}</pre>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="absolute top-2 right-2"
-                      onClick={() => copyToClipboard(generateJSONExample(), "json")}
+                      onClick={() => copyToClipboard(generateOpenAliasText(), "openalias")}
                     >
-                      {copied === "json" ? <Check size={16} /> : <Copy size={16} />}
+                      {copied === "openalias" ? <Check size={16} /> : <Copy size={16} />}
                     </Button>
                   </div>
                 </CardContent>
