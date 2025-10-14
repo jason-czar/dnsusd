@@ -12,6 +12,11 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalAliases: 0,
+    verifiedAliases: 0,
+    totalVerifications: 0,
+  });
 
   useEffect(() => {
     // Check authentication
@@ -20,7 +25,7 @@ export default function Dashboard() {
         navigate("/auth");
       } else {
         setUser(session.user);
-        setLoading(false);
+        fetchStats(session.user.id);
       }
     });
 
@@ -29,12 +34,38 @@ export default function Dashboard() {
         navigate("/auth");
       } else {
         setUser(session.user);
-        setLoading(false);
+        fetchStats(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const fetchStats = async (userId: string) => {
+    try {
+      // Fetch user's aliases
+      const { data: aliases, error: aliasError } = await supabase
+        .from("aliases")
+        .select("*")
+        .eq("user_id", userId);
+
+      if (aliasError) throw aliasError;
+
+      const totalAliases = aliases?.length || 0;
+      const verifiedAliases = aliases?.filter(a => a.dns_verified || a.https_verified).length || 0;
+      const totalVerifications = aliases?.filter(a => a.last_verification_at).length || 0;
+
+      setStats({
+        totalAliases,
+        verifiedAliases,
+        totalVerifications,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -179,9 +210,9 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">0</div>
+                <div className="text-3xl font-bold">{stats.totalAliases}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  No domains yet
+                  {stats.totalAliases === 0 ? "No domains yet" : `${stats.totalAliases} domain${stats.totalAliases === 1 ? "" : "s"}`}
                 </p>
               </CardContent>
             </Card>
@@ -193,9 +224,9 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">0</div>
+                <div className="text-3xl font-bold">{stats.verifiedAliases}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  No aliases configured
+                  {stats.verifiedAliases === 0 ? "No aliases configured" : `${stats.verifiedAliases} verified`}
                 </p>
               </CardContent>
             </Card>
@@ -207,9 +238,9 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">0</div>
+                <div className="text-3xl font-bold">{stats.totalVerifications}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  No verifications yet
+                  {stats.totalVerifications === 0 ? "No verifications yet" : `${stats.totalVerifications} completed`}
                 </p>
               </CardContent>
             </Card>
