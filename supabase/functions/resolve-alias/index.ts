@@ -112,9 +112,16 @@ serve(async (req) => {
         const { data: { user } } = await supabase.auth.getUser(token);
         userId = user?.id || null;
         
-        // TODO: Fetch user tier from database when billing is implemented
-        // For now, everyone is on free tier
-        userTier = 'free';
+        // Fetch user tier from database
+        if (userId) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('subscription_tier')
+            .eq('id', userId)
+            .single();
+          
+          userTier = (profile?.subscription_tier as 'free' | 'pro' | 'enterprise') || 'free';
+        }
       } catch (e) {
         console.log('[Main] Could not extract user from token');
       }

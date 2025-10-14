@@ -18,6 +18,8 @@ export default function Usage() {
     endpointBreakdown: [] as { endpoint: string; count: number }[],
     rateLimit: { limit: 1000, remaining: 1000 },
   });
+  const [subscription, setSubscription] = useState<any>(null);
+  const [upgradingTo, setUpgradingTo] = useState<string | null>(null);
 
   useEffect(() => {
     checkUser();
@@ -38,6 +40,16 @@ export default function Usage() {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
+
+    // Get subscription
+    const { data: subData } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    setSubscription(subData);
 
     // Get total calls this month
     const { data: monthlyData, error: monthlyError } = await supabase
@@ -83,9 +95,15 @@ export default function Usage() {
       .map(([endpoint, count]) => ({ endpoint, count }))
       .sort((a, b) => b.count - a.count);
 
-    // Calculate rate limit status
-    const freeLimit = 1000;
-    const remaining = Math.max(0, freeLimit - monthlyCount);
+    // Calculate rate limit based on tier
+    const tier = subData?.tier || 'free';
+    const limits: Record<string, number> = {
+      free: 1000,
+      pro: 100000,
+      enterprise: 999999999,
+    };
+    const tierLimit = limits[tier];
+    const remaining = Math.max(0, tierLimit - monthlyCount);
 
     setStats({
       totalCalls: totalCount,
@@ -93,8 +111,43 @@ export default function Usage() {
       avgResponseTime,
       errorRate,
       endpointBreakdown,
-      rateLimit: { limit: freeLimit, remaining },
+      rateLimit: { limit: tierLimit, remaining },
     });
+  };
+
+  const handleUpgrade = async (tier: string) => {
+    setUpgradingTo(tier);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { tier },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      console.error("Error creating checkout session:", error);
+      alert(error.message || "Failed to start checkout");
+    } finally {
+      setUpgradingTo(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-subscription");
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      console.error("Error opening subscription management:", error);
+      alert(error.message || "Failed to open subscription management");
+    }
   };
 
   if (loading) {
@@ -108,8 +161,8 @@ export default function Usage() {
     );
   }
 
-  const freeLimit = 1000;
-  const usagePercentage = (stats.thisMonth / freeLimit) * 100;
+  const currentTier = subscription?.tier || 'free';
+  const usagePercentage = (stats.thisMonth / stats.rateLimit.limit) * 100;
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,24 +186,28 @@ export default function Usage() {
         {/* Current Plan */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Current Plan: Free Tier</CardTitle>
-            <CardDescription>1,000 resolutions per month</CardDescription>
+            <CardTitle>Current Plan: {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Tier</CardTitle>
+            <CardDescription>
+              {currentTier === 'free' && '1,000 resolutions per month'}
+              {currentTier === 'pro' && '100,000 resolutions per month'}
+              {currentTier === 'enterprise' && 'Unlimited resolutions'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">
-                    {stats.thisMonth.toLocaleString()} / {freeLimit.toLocaleString()} calls this month
+                    {stats.thisMonth.toLocaleString()} / {stats.rateLimit.limit < 999999999 ? stats.rateLimit.limit.toLocaleString() : '∞'} calls this month
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {usagePercentage.toFixed(1)}%
+                    {currentTier === 'enterprise' ? '∞' : `${usagePercentage.toFixed(1)}%`}
                   </span>
                 </div>
-                <Progress value={usagePercentage} />
+                <Progress value={Math.min(usagePercentage, 100)} />
                 <div className="flex justify-between mt-2">
                   <span className="text-xs text-muted-foreground">
-                    {stats.rateLimit.remaining.toLocaleString()} calls remaining
+                    {stats.rateLimit.remaining < 999999999 ? `${stats.rateLimit.remaining.toLocaleString()} calls remaining` : 'Unlimited'}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     Resets monthly
@@ -158,7 +215,15 @@ export default function Usage() {
                 </div>
               </div>
               
-              {usagePercentage >= 100 && (
+              {subscription && (
+                <div className="pt-2">
+                  <Button variant="outline" onClick={handleManageSubscription} className="w-full">
+                    Manage Subscription
+                  </Button>
+                </div>
+              )}
+              
+              {usagePercentage >= 100 && currentTier === 'free' && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
                   <p className="text-sm font-semibold text-destructive">
                     <AlertCircle className="inline mr-2 h-4 w-4" />
@@ -167,7 +232,7 @@ export default function Usage() {
                 </div>
               )}
               
-              {usagePercentage >= 80 && usagePercentage < 100 && (
+              {usagePercentage >= 80 && usagePercentage < 100 && currentTier === 'free' && (
                 <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
                   <p className="text-sm">
                     <AlertCircle className="inline mr-2 h-4 w-4" />
@@ -176,35 +241,46 @@ export default function Usage() {
                 </div>
               )}
 
-              <div className="pt-4 border-t">
-                <h3 className="font-semibold mb-3">Available Plans</h3>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Free</h4>
-                    <p className="text-2xl font-bold mb-2">$0</p>
-                    <p className="text-sm text-muted-foreground mb-4">1,000 resolutions/month</p>
-                    <Button variant="outline" disabled className="w-full">
-                      Current Plan
-                    </Button>
-                  </div>
-                  <div className="border rounded-lg p-4 border-primary">
-                    <h4 className="font-semibold mb-2">Pro</h4>
-                    <p className="text-2xl font-bold mb-2">$49/mo</p>
-                    <p className="text-sm text-muted-foreground mb-4">100,000 resolutions/month + advanced features</p>
-                    <Button className="w-full" disabled>
-                      Coming Soon
-                    </Button>
-                  </div>
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Enterprise</h4>
-                    <p className="text-2xl font-bold mb-2">Custom</p>
-                    <p className="text-sm text-muted-foreground mb-4">Unlimited + custom SLAs</p>
-                    <Button variant="outline" className="w-full" disabled>
-                      Contact Sales
-                    </Button>
+              {currentTier === 'free' && (
+                <div className="pt-4 border-t">
+                  <h3 className="font-semibold mb-3">Available Plans</h3>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="border rounded-lg p-4 border-primary">
+                      <h4 className="font-semibold mb-2">Free</h4>
+                      <p className="text-2xl font-bold mb-2">$0</p>
+                      <p className="text-sm text-muted-foreground mb-4">1,000 resolutions/month</p>
+                      <Button variant="outline" disabled className="w-full">
+                        Current Plan
+                      </Button>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Pro</h4>
+                      <p className="text-2xl font-bold mb-2">$49/mo</p>
+                      <p className="text-sm text-muted-foreground mb-4">100,000 resolutions/month + priority support</p>
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleUpgrade('pro')}
+                        disabled={upgradingTo !== null}
+                      >
+                        {upgradingTo === 'pro' ? 'Opening...' : 'Upgrade to Pro'}
+                      </Button>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Enterprise</h4>
+                      <p className="text-2xl font-bold mb-2">Custom</p>
+                      <p className="text-sm text-muted-foreground mb-4">Unlimited + custom SLAs</p>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => handleUpgrade('enterprise')}
+                        disabled={upgradingTo !== null}
+                      >
+                        {upgradingTo === 'enterprise' ? 'Opening...' : 'Contact Sales'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
