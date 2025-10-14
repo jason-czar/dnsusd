@@ -15,6 +15,9 @@ import AddAlias from "./pages/AddAlias";
 import AliasDetail from "./pages/AliasDetail";
 import TrustReport from "./pages/TrustReport";
 import Monitoring from "./pages/Monitoring";
+import ApiDocs from "./pages/ApiDocs";
+import SdkDocs from "./pages/SdkDocs";
+import WebhookTester from "./pages/WebhookTester";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +35,9 @@ const App = () => (
           <Route path="/dashboard/aliases/:id" element={<AliasDetail />} />
           <Route path="/dashboard/aliases/:id/trust" element={<TrustReport />} />
           <Route path="/dashboard/monitoring" element={<Monitoring />} />
+          <Route path="/docs/api" element={<ApiDocs />} />
+          <Route path="/docs/sdk" element={<SdkDocs />} />
+          <Route path="/docs/webhooks" element={<WebhookTester />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/tos" element={<TOS />} />
           <Route path="/policy" element={<Policy />} />
