@@ -208,26 +208,61 @@ export default function AliasDetail() {
         <Card>
           <CardHeader>
             <CardTitle>Change History</CardTitle>
-            <CardDescription>Timeline of address changes</CardDescription>
+            <CardDescription>Timeline of address changes with diffs</CardDescription>
           </CardHeader>
           <CardContent>
             {history.length === 0 ? (
               <p className="text-muted-foreground">No history available</p>
             ) : (
-              <div className="space-y-3">
-                {history.map((entry) => (
-                  <div key={entry.id} className="flex justify-between items-center border-b pb-2">
-                    <div>
-                      <code className="text-sm">{entry.address}</code>
-                      <p className="text-xs text-muted-foreground">
-                        {entry.currency} • {entry.source_type}
-                      </p>
+              <div className="space-y-4">
+                {history.map((entry, index) => {
+                  const prevEntry = index < history.length - 1 ? history[index + 1] : null;
+                  const addressChanged = prevEntry && prevEntry.address !== entry.address;
+                  
+                  return (
+                    <div key={entry.id} className="pb-4 border-b last:border-0">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-primary" />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm text-muted-foreground">
+                              {format(new Date(entry.resolved_at), "MMM d, yyyy 'at' h:mm a")}
+                            </span>
+                            <span className="text-xs px-2 py-0.5 rounded bg-muted">
+                              {entry.source_type}
+                            </span>
+                            {addressChanged && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-destructive/10 text-destructive">
+                                Address Changed
+                              </span>
+                            )}
+                          </div>
+                          
+                          {addressChanged && prevEntry ? (
+                            <div className="bg-muted/50 p-3 rounded-md space-y-2 text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">Previous:</span>
+                                <code className="text-destructive line-through">{prevEntry.address}</code>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">New:</span>
+                                <code className="text-green-600 dark:text-green-400 font-semibold">
+                                  {entry.address}
+                                </code>
+                              </div>
+                            </div>
+                          ) : (
+                            <code className="text-sm block">{entry.address}</code>
+                          )}
+                          
+                          <div className="text-xs text-muted-foreground">
+                            {entry.currency} • Confidence: {entry.confidence || "N/A"}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(entry.resolved_at), "MMM d, yyyy")}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

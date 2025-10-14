@@ -89,17 +89,18 @@ Deno.serve(async (req) => {
         results.successful++;
         console.log(`Verified ${alias.alias_string}: Trust score ${verificationResult.trustScore}`);
 
-        // Check if trust score dropped significantly
+        // Check if trust score dropped significantly or address changed
         const trustScoreDrop = alias.trust_score - verificationResult.trustScore;
+        const oldAddress = alias.current_address;
+        const newAddress = verificationResult.resolvedAddress;
         
-        if (trustScoreDrop >= 20 || verificationResult.trustScore === 0) {
+        if (trustScoreDrop >= 20 || verificationResult.trustScore === 0 || (oldAddress && newAddress && oldAddress !== newAddress)) {
           // Check for monitoring rules
           const { data: rules, error: rulesError } = await supabase
             .from('monitoring_rules')
             .select('*')
             .eq('alias_id', alias.id)
-            .eq('enabled', true)
-            .lte('trust_threshold', verificationResult.trustScore);
+            .eq('enabled', true);
 
           if (rulesError) {
             console.error('Error fetching monitoring rules:', rulesError);
@@ -109,6 +110,49 @@ Deno.serve(async (req) => {
           // Send alerts
           for (const rule of rules || []) {
             try {
+              // Check if trust score below threshold
+              if (rule.trust_threshold && verificationResult.trustScore >= rule.trust_threshold) {
+                continue;
+              }
+
+              // Send email alert if configured
+              if (rule.alert_email && alias.user_id) {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('email')
+                  .eq('id', alias.user_id)
+                  .single();
+
+                if (profile?.email) {
+                  try {
+                    await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-alert-email`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                      },
+                      body: JSON.stringify({
+                        to: profile.email,
+                        aliasString: alias.alias_string,
+                        oldTrustScore: alias.trust_score || 0,
+                        newTrustScore: verificationResult.trustScore,
+                        oldAddress,
+                        newAddress,
+                        verificationDetails: {
+                          dns_verified: verificationResult.dnsVerified || false,
+                          https_verified: verificationResult.httpsVerified || false,
+                          dnssec_enabled: verificationResult.dnssecEnabled || false,
+                        },
+                      }),
+                    });
+                    results.alertsSent++;
+                  } catch (emailError) {
+                    console.error('Failed to send alert email:', emailError);
+                  }
+                }
+              }
+
+              // Trigger webhook if configured
               if (rule.alert_webhook_url) {
                 await fetch(rule.alert_webhook_url, {
                   method: 'POST',
@@ -118,13 +162,15 @@ Deno.serve(async (req) => {
                     alias: alias.alias_string,
                     previous_score: alias.trust_score,
                     current_score: verificationResult.trustScore,
+                    old_address: oldAddress,
+                    new_address: newAddress,
                     errors: verificationResult.errors,
                     timestamp: new Date().toISOString(),
                   }),
                 });
+                results.alertsSent++;
               }
 
-              results.alertsSent++;
               console.log(`Alert sent for ${alias.alias_string} (trust drop: ${trustScoreDrop})`);
             } catch (alertError) {
               console.error('Error sending alert:', alertError);
