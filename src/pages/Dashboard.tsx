@@ -4,12 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key, Settings } from "lucide-react";
+import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key, Settings, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentOrganization, isPersonalContext } = useOrganization();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -43,11 +46,16 @@ export default function Dashboard() {
 
   const fetchStats = async (userId: string) => {
     try {
-      // Fetch user's aliases
-      const { data: aliases, error: aliasError } = await supabase
-        .from("aliases")
-        .select("*")
-        .eq("user_id", userId);
+      // Build query based on context
+      let query = supabase.from("aliases").select("*");
+      
+      if (isPersonalContext) {
+        query = query.eq("user_id", userId).is("organization_id", null);
+      } else if (currentOrganization) {
+        query = query.eq("organization_id", currentOrganization.id);
+      }
+
+      const { data: aliases, error: aliasError } = await query;
 
       if (aliasError) throw aliasError;
 
@@ -88,9 +96,14 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <HomeIcon className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">AliasResolve</h1>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <HomeIcon className="h-6 w-6 text-primary" />
+              <h1 className="text-xl font-bold">AliasResolve</h1>
+            </div>
+            <div className="w-64">
+              <OrganizationSwitcher />
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{user?.email}</span>
@@ -217,6 +230,23 @@ export default function Dashboard() {
               <CardContent>
                 <Button className="w-full">
                   View API Docs
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/organizations")}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Organizations
+                </CardTitle>
+                <CardDescription>
+                  Manage teams and collaboration
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  Manage Organizations
                 </Button>
               </CardContent>
             </Card>
