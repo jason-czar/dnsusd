@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart } from "lucide-react";
+import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
@@ -179,6 +179,23 @@ export default function Dashboard() {
               <CardContent>
                 <Button className="w-full">
                   View Usage
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/api-keys")}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="h-5 w-5" />
+                  API Keys
+                </CardTitle>
+                <CardDescription>
+                  Generate and manage API keys
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  Manage Keys
                 </Button>
               </CardContent>
             </Card>

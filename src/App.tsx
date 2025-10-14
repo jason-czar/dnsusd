@@ -20,6 +20,7 @@ import SdkDocs from "./pages/SdkDocs";
 import WebhookTester from "./pages/WebhookTester";
 import Admin from "./pages/Admin";
 import Usage from "./pages/Usage";
+import ApiKeys from "./pages/ApiKeys";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/dashboard/aliases/:id/trust" element={<TrustReport />} />
           <Route path="/dashboard/monitoring" element={<Monitoring />} />
           <Route path="/dashboard/usage" element={<Usage />} />
+          <Route path="/dashboard/api-keys" element={<ApiKeys />} />
           <Route path="/docs/api" element={<ApiDocs />} />
           <Route path="/docs/sdk" element={<SdkDocs />} />
           <Route path="/docs/webhooks" element={<WebhookTester />} />
