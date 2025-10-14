@@ -196,7 +196,7 @@ export default function VerifyAlias() {
 
   const copyDNSRecord = () => {
     if (!alias) return;
-    const record = `${alias.alias_string}. IN TXT "oa1:${alias.current_currency} recipient_address=${alias.current_address}; recipient_name=${alias.alias_string};"`;
+    const record = `oa1:${alias.current_currency} recipient_address=${alias.current_address}; recipient_name=${alias.alias_string};`;
     navigator.clipboard.writeText(record);
     toast.success("DNS record copied to clipboard");
   };
@@ -342,10 +342,12 @@ export default function VerifyAlias() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-muted p-4 rounded-lg font-mono text-sm break-all">
-              {alias.alias_string}. IN TXT "oa1:{alias.current_currency}{" "}
-              recipient_address={alias.current_address}; recipient_name=
-              {alias.current_currency};"
+            <div className="bg-muted p-4 rounded-lg font-mono text-sm space-y-1">
+              <div>TXT</div>
+              <div>@</div>
+              <div className="break-all">
+                oa1:{alias.current_currency} recipient_address={alias.current_address}; recipient_name={alias.alias_string};
+              </div>
             </div>
             <Button variant="outline" onClick={copyDNSRecord} className="w-full">
               <Copy size={16} className="mr-2" />
