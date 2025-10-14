@@ -101,19 +101,19 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:border-primary transition-colors">
+            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/aliases")}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
-                  Add Domain
+                  Manage Aliases
                 </CardTitle>
                 <CardDescription>
-                  Connect a new domain and configure wallet mappings
+                  View and manage your domain aliases
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full" disabled>
-                  Coming Soon
+                <Button className="w-full">
+                  View Aliases
                 </Button>
               </CardContent>
             </Card>

@@ -10,6 +10,9 @@ import TOS from "./pages/TOS";
 import Policy from "./pages/Policy";
 import Thumb from "./pages/Thumb";
 import NotFound from "./pages/NotFound";
+import AliasesList from "./pages/AliasesList";
+import AddAlias from "./pages/AddAlias";
+import AliasDetail from "./pages/AliasDetail";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +25,9 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/aliases" element={<AliasesList />} />
+          <Route path="/dashboard/aliases/new" element={<AddAlias />} />
+          <Route path="/dashboard/aliases/:id" element={<AliasDetail />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/tos" element={<TOS />} />
           <Route path="/policy" element={<Policy />} />

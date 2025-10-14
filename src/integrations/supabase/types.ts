@@ -62,10 +62,16 @@ export type Database = {
           current_address: string | null
           current_currency: string | null
           current_source: string | null
+          dns_verified: boolean | null
+          dnssec_enabled: boolean | null
+          https_verified: boolean | null
           id: string
           last_resolved_at: string | null
+          last_verification_at: string | null
+          trust_score: number | null
           updated_at: string
           user_id: string | null
+          verification_method: string | null
         }
         Insert: {
           alias_string: string
@@ -73,10 +79,16 @@ export type Database = {
           current_address?: string | null
           current_currency?: string | null
           current_source?: string | null
+          dns_verified?: boolean | null
+          dnssec_enabled?: boolean | null
+          https_verified?: boolean | null
           id?: string
           last_resolved_at?: string | null
+          last_verification_at?: string | null
+          trust_score?: number | null
           updated_at?: string
           user_id?: string | null
+          verification_method?: string | null
         }
         Update: {
           alias_string?: string
@@ -84,10 +96,16 @@ export type Database = {
           current_address?: string | null
           current_currency?: string | null
           current_source?: string | null
+          dns_verified?: boolean | null
+          dnssec_enabled?: boolean | null
+          https_verified?: boolean | null
           id?: string
           last_resolved_at?: string | null
+          last_verification_at?: string | null
+          trust_score?: number | null
           updated_at?: string
           user_id?: string | null
+          verification_method?: string | null
         }
         Relationships: []
       }
@@ -126,6 +144,57 @@ export type Database = {
           resolved_address?: string | null
         }
         Relationships: []
+      }
+      monitoring_rules: {
+        Row: {
+          alert_email: boolean | null
+          alert_webhook_url: string | null
+          alias_id: string
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          trust_threshold: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_email?: boolean | null
+          alert_webhook_url?: string | null
+          alias_id: string
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          trust_threshold?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_email?: boolean | null
+          alert_webhook_url?: string | null
+          alias_id?: string
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          trust_threshold?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_rules_alias_id_fkey"
+            columns: ["alias_id"]
+            isOneToOne: true
+            referencedRelation: "aliases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitoring_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
