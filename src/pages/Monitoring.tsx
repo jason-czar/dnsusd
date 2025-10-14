@@ -1,112 +1,163 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Bell, Mail, Webhook, ArrowLeft, Plus, Trash2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Bell, Plus, Trash2, AlertTriangle, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MonitoringRule {
   id: string;
   alias_id: string;
-  enabled: boolean;
+  trust_threshold: number;
   alert_email: boolean;
   alert_webhook_url: string | null;
-  trust_threshold: number;
-  alias?: {
+  enabled: boolean;
+  aliases?: {
+    alias_string: string;
+    trust_score: number;
+  };
+}
+
+interface Alert {
+  id: string;
+  alert_type: string;
+  severity: string;
+  message: string;
+  created_at: string;
+  resolved: boolean;
+  email_sent: boolean;
+  webhook_sent: boolean;
+  aliases?: {
     alias_string: string;
   };
 }
 
-interface Alias {
-  id: string;
-  alias_string: string;
-}
-
 export default function Monitoring() {
-  const navigate = useNavigate();
   const [rules, setRules] = useState<MonitoringRule[]>([]);
-  const [aliases, setAliases] = useState<Alias[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [userAliases, setUserAliases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAlias, setSelectedAlias] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRule, setNewRule] = useState({
-    alertEmail: true,
-    webhookUrl: "",
-    trustThreshold: 50,
+    alias_id: "",
+    trust_threshold: 50,
+    alert_email: true,
+    alert_webhook_url: "",
+    enabled: true,
   });
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
+    fetchData();
   }, []);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       navigate("/auth");
-      return;
     }
-    fetchData();
   };
 
   const fetchData = async () => {
     try {
-      const [rulesResponse, aliasesResponse] = await Promise.all([
-        supabase
-          .from("monitoring_rules")
-          .select("*, aliases(alias_string)")
-          .order("created_at", { ascending: false }),
-        supabase.from("aliases").select("id, alias_string").order("alias_string"),
-      ]);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      if (rulesResponse.error) throw rulesResponse.error;
-      if (aliasesResponse.error) throw aliasesResponse.error;
+      // Fetch monitoring rules
+      const { data: rulesData, error: rulesError } = await supabase
+        .from("monitoring_rules")
+        .select(`
+          *,
+          aliases (
+            alias_string,
+            trust_score
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-      setRules(rulesResponse.data || []);
-      setAliases(aliasesResponse.data || []);
+      if (rulesError) throw rulesError;
+      setRules(rulesData || []);
+
+      // Fetch alerts
+      const { data: alertsData, error: alertsError } = await supabase
+        .from("alerts")
+        .select(`
+          *,
+          aliases (
+            alias_string
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (alertsError) throw alertsError;
+      setAlerts(alertsData || []);
+
+      // Fetch user aliases for dropdown
+      const { data: aliasesData, error: aliasesError } = await supabase
+        .from("aliases")
+        .select("id, alias_string, trust_score")
+        .eq("user_id", user.id)
+        .order("alias_string");
+
+      if (aliasesError) throw aliasesError;
+      setUserAliases(aliasesData || []);
     } catch (error: any) {
-      toast.error("Failed to load monitoring rules: " + error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreateRule = async () => {
-    if (!selectedAlias) {
-      toast.error("Please select an alias");
-      return;
-    }
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return;
 
       const { error } = await supabase.from("monitoring_rules").insert({
+        ...newRule,
         user_id: user.id,
-        alias_id: selectedAlias,
-        enabled: true,
-        alert_email: newRule.alertEmail,
-        alert_webhook_url: newRule.webhookUrl || null,
-        trust_threshold: newRule.trustThreshold,
+        alert_webhook_url: newRule.alert_webhook_url || null,
       });
 
       if (error) throw error;
 
-      toast.success("Monitoring rule created");
-      setSelectedAlias("");
-      setNewRule({ alertEmail: true, webhookUrl: "", trustThreshold: 50 });
+      toast({
+        title: "Success",
+        description: "Monitoring rule created successfully",
+      });
+
+      setIsDialogOpen(false);
+      setNewRule({
+        alias_id: "",
+        trust_threshold: 50,
+        alert_email: true,
+        alert_webhook_url: "",
+        enabled: true,
+      });
       fetchData();
     } catch (error: any) {
-      toast.error("Failed to create rule: " + error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
   };
 
@@ -119,10 +170,18 @@ export default function Monitoring() {
 
       if (error) throw error;
 
-      toast.success(enabled ? "Monitoring enabled" : "Monitoring disabled");
+      toast({
+        title: "Success",
+        description: `Rule ${enabled ? "enabled" : "disabled"}`,
+      });
+
       fetchData();
     } catch (error: any) {
-      toast.error("Failed to update rule: " + error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
   };
 
@@ -134,172 +193,348 @@ export default function Monitoring() {
 
       if (error) throw error;
 
-      toast.success("Monitoring rule deleted");
+      toast({
+        title: "Success",
+        description: "Monitoring rule deleted",
+      });
+
       fetchData();
     } catch (error: any) {
-      toast.error("Failed to delete rule: " + error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
+  };
+
+  const handleResolveAlert = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("alerts")
+        .update({ resolved: true, resolved_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Alert marked as resolved",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    const variants: any = {
+      critical: "destructive",
+      warning: "secondary",
+      info: "outline",
+    };
+    return <Badge variant={variants[severity] || "outline"}>{severity}</Badge>;
+  };
+
+  const getAlertTypeLabel = (type: string) => {
+    const labels: any = {
+      trust_score_drop: "Trust Score Drop",
+      verification_failed: "Verification Failed",
+      address_change: "Address Change",
+    };
+    return labels[type] || type;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/4"></div>
+          <div className="h-64 bg-muted rounded"></div>
+        </div>
       </div>
     );
   }
 
-  const availableAliases = aliases.filter(
-    (alias) => !rules.some((rule) => rule.alias_id === alias.id)
-  );
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Monitoring & Alerts</h1>
-            <p className="text-muted-foreground">Configure change detection and notifications</p>
-          </div>
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft size={16} className="mr-2" />
-            Back to Dashboard
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Monitoring & Alerts</h1>
+            <p className="text-muted-foreground">Configure monitoring rules and view alert history</p>
+          </div>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Add Monitoring Rule</CardTitle>
-            <CardDescription>Set up alerts for alias changes or trust score drops</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Monitoring Rules */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="alias-select">Select Alias</Label>
-              <Select value={selectedAlias} onValueChange={setSelectedAlias}>
-                <SelectTrigger id="alias-select">
-                  <SelectValue placeholder="Choose an alias to monitor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableAliases.map((alias) => (
-                    <SelectItem key={alias.id} value={alias.id}>
-                      {alias.alias_string}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Monitoring Rules
+              </CardTitle>
+              <CardDescription>
+                Configure alerts for your aliases based on trust score and verification status
+              </CardDescription>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive alerts via email</p>
-              </div>
-              <Switch
-                checked={newRule.alertEmail}
-                onCheckedChange={(checked) =>
-                  setNewRule({ ...newRule, alertEmail: checked })
-                }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="webhook-url">Webhook URL (Optional)</Label>
-              <Input
-                id="webhook-url"
-                placeholder="https://your-webhook-endpoint.com"
-                value={newRule.webhookUrl}
-                onChange={(e) => setNewRule({ ...newRule, webhookUrl: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="trust-threshold">Trust Score Threshold</Label>
-              <Input
-                id="trust-threshold"
-                type="number"
-                min="0"
-                max="100"
-                value={newRule.trustThreshold}
-                onChange={(e) =>
-                  setNewRule({ ...newRule, trustThreshold: parseInt(e.target.value) || 50 })
-                }
-              />
-              <p className="text-sm text-muted-foreground mt-1">
-                Alert when trust score drops below this value
-              </p>
-            </div>
-
-            <Button onClick={handleCreateRule} disabled={!selectedAlias} className="w-full">
-              <Plus size={16} className="mr-2" />
-              Create Monitoring Rule
-            </Button>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Active Monitoring Rules</h2>
-
-          {rules.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Bell className="mx-auto mb-4 text-muted-foreground" size={48} />
-                <h3 className="text-lg font-semibold mb-2">No monitoring rules yet</h3>
-                <p className="text-muted-foreground">
-                  Create your first monitoring rule to get alerts about alias changes
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            rules.map((rule) => (
-              <Card key={rule.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {rule.alias?.alias_string || "Unknown alias"}
-                      </CardTitle>
-                      <CardDescription>
-                        Alert threshold: {rule.trust_threshold} trust score
-                      </CardDescription>
-                    </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Rule
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Monitoring Rule</DialogTitle>
+                  <DialogDescription>
+                    Set up alerts for changes to your alias verification status
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Alias</Label>
+                    <Select
+                      value={newRule.alias_id}
+                      onValueChange={(value) => setNewRule({ ...newRule, alias_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an alias" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {userAliases.map((alias) => (
+                          <SelectItem key={alias.id} value={alias.id}>
+                            {alias.alias_string} (Trust: {alias.trust_score})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Trust Score Threshold</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newRule.trust_threshold}
+                      onChange={(e) =>
+                        setNewRule({ ...newRule, trust_threshold: parseInt(e.target.value) })
+                      }
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Alert when trust score drops below this value
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Email Alerts</Label>
                     <Switch
-                      checked={rule.enabled}
-                      onCheckedChange={(checked) => handleToggleRule(rule.id, checked)}
+                      checked={newRule.alert_email}
+                      onCheckedChange={(checked) =>
+                        setNewRule({ ...newRule, alert_email: checked })
+                      }
                     />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail size={16} className="text-muted-foreground" />
-                      <span>
-                        Email notifications: {rule.alert_email ? "Enabled" : "Disabled"}
-                      </span>
-                    </div>
-                    {rule.alert_webhook_url && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Webhook size={16} className="text-muted-foreground" />
-                        <span className="truncate">Webhook: {rule.alert_webhook_url}</span>
-                      </div>
-                    )}
+                  <div className="space-y-2">
+                    <Label>Webhook URL (Optional)</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://example.com/webhook"
+                      value={newRule.alert_webhook_url}
+                      onChange={(e) =>
+                        setNewRule({ ...newRule, alert_webhook_url: e.target.value })
+                      }
+                    />
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => handleDeleteRule(rule.id)}
-                  >
-                    <Trash2 size={14} className="mr-2" />
-                    Delete Rule
+                  <div className="flex items-center justify-between">
+                    <Label>Enable Rule</Label>
+                    <Switch
+                      checked={newRule.enabled}
+                      onCheckedChange={(checked) => setNewRule({ ...newRule, enabled: checked })}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
                   </Button>
-                </CardContent>
-              </Card>
-            ))
+                  <Button onClick={handleCreateRule} disabled={!newRule.alias_id}>
+                    Create Rule
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {rules.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No monitoring rules configured</p>
+              <p className="text-sm">Create a rule to start monitoring your aliases</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Alias</TableHead>
+                  <TableHead>Trust Threshold</TableHead>
+                  <TableHead>Current Score</TableHead>
+                  <TableHead>Alerts</TableHead>
+                  <TableHead>Enabled</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rules.map((rule) => (
+                  <TableRow key={rule.id}>
+                    <TableCell className="font-medium">
+                      {rule.aliases?.alias_string || "Unknown"}
+                    </TableCell>
+                    <TableCell>{rule.trust_threshold}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          (rule.aliases?.trust_score || 0) >= 70
+                            ? "default"
+                            : (rule.aliases?.trust_score || 0) >= 40
+                            ? "secondary"
+                            : "destructive"
+                        }
+                      >
+                        {rule.aliases?.trust_score || 0}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {rule.alert_email && <Badge variant="outline">Email</Badge>}
+                        {rule.alert_webhook_url && <Badge variant="outline">Webhook</Badge>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={rule.enabled}
+                        onCheckedChange={(checked) => handleToggleRule(rule.id, checked)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteRule(rule.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </div>
-      </main>
+        </CardContent>
+      </Card>
+
+      {/* Alert History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Alert History
+          </CardTitle>
+          <CardDescription>Recent alerts triggered by your monitoring rules</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {alerts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No alerts triggered</p>
+              <p className="text-sm">Your aliases are being monitored</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Alias</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Severity</TableHead>
+                  <TableHead>Message</TableHead>
+                  <TableHead>Notifications</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {alerts.map((alert) => (
+                  <TableRow key={alert.id} className={alert.resolved ? "opacity-50" : ""}>
+                    <TableCell>
+                      {new Date(alert.created_at).toLocaleDateString()}
+                      <br />
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(alert.created_at).toLocaleTimeString()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {alert.aliases?.alias_string || "Unknown"}
+                    </TableCell>
+                    <TableCell>{getAlertTypeLabel(alert.alert_type)}</TableCell>
+                    <TableCell>{getSeverityBadge(alert.severity)}</TableCell>
+                    <TableCell className="max-w-xs truncate">{alert.message}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {alert.email_sent && (
+                          <Badge variant="outline" className="text-xs">
+                            Email
+                          </Badge>
+                        )}
+                        {alert.webhook_sent && (
+                          <Badge variant="outline" className="text-xs">
+                            Webhook
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {alert.resolved ? (
+                        <Badge variant="outline">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Resolved
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Active
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {!alert.resolved && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResolveAlert(alert.id)}
+                        >
+                          Resolve
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

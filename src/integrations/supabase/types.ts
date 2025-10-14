@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          alert_type: string
+          alias_id: string
+          created_at: string
+          email_sent: boolean | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          rule_id: string
+          severity: string
+          user_id: string
+          webhook_sent: boolean | null
+        }
+        Insert: {
+          alert_type: string
+          alias_id: string
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          rule_id: string
+          severity: string
+          user_id: string
+          webhook_sent?: boolean | null
+        }
+        Update: {
+          alert_type?: string
+          alias_id?: string
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          rule_id?: string
+          severity?: string
+          user_id?: string
+          webhook_sent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_alias_id_fkey"
+            columns: ["alias_id"]
+            isOneToOne: false
+            referencedRelation: "aliases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "monitoring_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alias_history: {
         Row: {
           address: string

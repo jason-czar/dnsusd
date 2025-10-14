@@ -115,6 +115,51 @@ Deno.serve(async (req) => {
                 continue;
               }
 
+              // Determine alert type and severity
+              let alertType = 'trust_score_drop';
+              let severity = 'warning';
+              let message = `Trust score dropped from ${alias.trust_score} to ${verificationResult.trustScore}`;
+              
+              if (oldAddress && newAddress && oldAddress !== newAddress) {
+                alertType = 'address_change';
+                severity = 'critical';
+                message = `Address changed from ${oldAddress} to ${newAddress}`;
+              } else if (verificationResult.trustScore === 0) {
+                alertType = 'verification_failed';
+                severity = 'critical';
+                message = 'Verification completely failed';
+              }
+
+              // Create alert record
+              const { data: newAlert, error: alertError } = await supabase
+                .from('alerts')
+                .insert({
+                  user_id: alias.user_id,
+                  alias_id: alias.id,
+                  rule_id: rule.id,
+                  alert_type: alertType,
+                  severity,
+                  message,
+                  metadata: {
+                    old_trust_score: alias.trust_score,
+                    new_trust_score: verificationResult.trustScore,
+                    old_address: oldAddress,
+                    new_address: newAddress,
+                    verification_details: {
+                      dns_verified: verificationResult.dnsVerified || false,
+                      https_verified: verificationResult.httpsVerified || false,
+                      dnssec_enabled: verificationResult.dnssecEnabled || false,
+                    },
+                  },
+                })
+                .select()
+                .single();
+
+              if (alertError) {
+                console.error('Failed to create alert record:', alertError);
+                continue;
+              }
+
               // Send email alert if configured
               if (rule.alert_email && alias.user_id) {
                 const { data: profile } = await supabase
@@ -145,6 +190,13 @@ Deno.serve(async (req) => {
                         },
                       }),
                     });
+                    
+                    // Mark email as sent
+                    await supabase
+                      .from('alerts')
+                      .update({ email_sent: true })
+                      .eq('id', newAlert.id);
+                    
                     results.alertsSent++;
                   } catch (emailError) {
                     console.error('Failed to send alert email:', emailError);
@@ -153,22 +205,33 @@ Deno.serve(async (req) => {
               }
 
               // Trigger webhook if configured
-              if (rule.alert_webhook_url) {
-                await fetch(rule.alert_webhook_url, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    event: 'trust_score_drop',
-                    alias: alias.alias_string,
-                    previous_score: alias.trust_score,
-                    current_score: verificationResult.trustScore,
-                    old_address: oldAddress,
-                    new_address: newAddress,
-                    errors: verificationResult.errors,
-                    timestamp: new Date().toISOString(),
-                  }),
-                });
-                results.alertsSent++;
+              if (rule.alert_webhook_url && newAlert) {
+                try {
+                  await fetch(rule.alert_webhook_url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      event: alertType,
+                      alias: alias.alias_string,
+                      previous_score: alias.trust_score,
+                      current_score: verificationResult.trustScore,
+                      old_address: oldAddress,
+                      new_address: newAddress,
+                      errors: verificationResult.errors,
+                      timestamp: new Date().toISOString(),
+                    }),
+                  });
+                  
+                  // Mark webhook as sent
+                  await supabase
+                    .from('alerts')
+                    .update({ webhook_sent: true })
+                    .eq('id', newAlert.id);
+                  
+                  results.alertsSent++;
+                } catch (webhookError) {
+                  console.error('Failed to send webhook:', webhookError);
+                }
               }
 
               console.log(`Alert sent for ${alias.alias_string} (trust drop: ${trustScoreDrop})`);
