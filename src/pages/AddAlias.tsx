@@ -77,6 +77,25 @@ export default function AddAlias() {
         return;
       }
 
+      // Check if alias already exists
+      const { data: existingAlias } = await supabase
+        .from("aliases")
+        .select("id, user_id")
+        .eq("alias_string", domain)
+        .maybeSingle();
+
+      if (existingAlias) {
+        if (existingAlias.user_id === user.id) {
+          toast.error("You already own this alias", {
+            description: "Check your aliases dashboard to view or update it.",
+          });
+          navigate("/dashboard/aliases");
+        } else {
+          toast.error("This alias is already registered by another user");
+        }
+        return;
+      }
+
       // Create the alias record
       const { data: aliasData, error: aliasError } = await supabase
         .from("aliases")
