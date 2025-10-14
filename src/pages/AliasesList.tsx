@@ -85,8 +85,7 @@ export default function AliasesList() {
   };
 
   const handleVerify = async (id: string) => {
-    toast.info("Re-verification started...");
-    // This will be implemented when we add the verification logic
+    navigate(`/dashboard/aliases/${id}/verify`);
   };
 
   const filteredAliases = aliases.filter((alias) =>

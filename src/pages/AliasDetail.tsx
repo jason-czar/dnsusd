@@ -87,34 +87,7 @@ export default function AliasDetail() {
 
   const handleReVerify = async () => {
     if (!alias) return;
-    
-    toast.info("Re-verification started...");
-    
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-alias-ownership", {
-        body: {
-          aliasId: alias.id,
-          domain: alias.alias_string,
-          verificationMethod: alias.verification_method || "dns",
-          expectedAddresses: {
-            [alias.current_currency || "btc"]: alias.current_address || "",
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast.success("Re-verification successful");
-        fetchAliasData();
-      } else {
-        toast.error("Re-verification failed", {
-          description: data.errors.join(", "),
-        });
-      }
-    } catch (error: any) {
-      toast.error("Failed to re-verify: " + error.message);
-    }
+    navigate(`/dashboard/aliases/${alias.id}/verify`);
   };
 
   if (loading) {

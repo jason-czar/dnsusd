@@ -22,6 +22,7 @@ import Admin from "./pages/Admin";
 import Usage from "./pages/Usage";
 import ApiKeys from "./pages/ApiKeys";
 import Settings from "./pages/Settings";
+import VerifyAlias from "./pages/VerifyAlias";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/dashboard/aliases" element={<AliasesList />} />
           <Route path="/dashboard/aliases/new" element={<AddAlias />} />
           <Route path="/dashboard/aliases/:id" element={<AliasDetail />} />
+          <Route path="/dashboard/aliases/:id/verify" element={<VerifyAlias />} />
           <Route path="/dashboard/aliases/:id/trust" element={<TrustReport />} />
           <Route path="/dashboard/monitoring" element={<Monitoring />} />
           <Route path="/dashboard/usage" element={<Usage />} />
