@@ -77,25 +77,6 @@ export default function AddAlias() {
         return;
       }
 
-      // Check if alias already exists
-      const { data: existingAlias } = await supabase
-        .from("aliases")
-        .select("id, user_id")
-        .eq("alias_string", domain)
-        .maybeSingle();
-
-      if (existingAlias) {
-        if (existingAlias.user_id === user.id) {
-          toast.error("You already own this alias", {
-            description: "Check your aliases dashboard to view or update it.",
-          });
-          navigate("/dashboard/aliases");
-        } else {
-          toast.error("This alias is already registered by another user");
-        }
-        return;
-      }
-
       // Create the alias record
       const { data: aliasData, error: aliasError } = await supabase
         .from("aliases")
@@ -315,14 +296,19 @@ export default function AddAlias() {
                   Once you've set up the DNS records and/or HTTPS file, click verify to activate your alias
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setStep(2)}>
-                  Back
+              <CardContent className="flex justify-between gap-2">
+                <Button variant="outline" onClick={() => navigate("/dashboard/aliases")}>
+                  My Aliases
                 </Button>
-                <Button onClick={handleVerify} disabled={verifying}>
-                  {verifying && <Loader2 className="mr-2 animate-spin" size={16} />}
-                  Verify & Activate
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setStep(2)}>
+                    Back
+                  </Button>
+                  <Button onClick={handleVerify} disabled={verifying}>
+                    {verifying && <Loader2 className="mr-2 animate-spin" size={16} />}
+                    Verify & Activate
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
