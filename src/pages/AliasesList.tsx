@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TrustScoreBadge } from "@/components/TrustScoreBadge";
-import { Plus, Search, RefreshCw, Trash2, Eye } from "lucide-react";
+import { Plus, Search, RefreshCw, Trash2, Eye, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -173,29 +173,40 @@ export default function AliasesList() {
                         : "Never"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => navigate(`/dashboard/aliases/${alias.id}`)}
-                        >
-                          <Eye size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleVerify(alias.id)}
-                        >
-                          <RefreshCw size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(alias.id)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigate(`/dashboard/aliases/${alias.id}`)}
+                      title="View Details"
+                    >
+                      <Eye size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigate(`/dashboard/aliases/${alias.id}/trust`)}
+                      title="Trust Report"
+                    >
+                      <Shield size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleVerify(alias.id)}
+                      title="Re-verify"
+                    >
+                      <RefreshCw size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(alias.id)}
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -150,7 +150,16 @@ export default function AliasDetail() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Trust Score</span>
-              <TrustScoreBadge score={alias.trust_score} size="md" />
+              <div className="flex items-center gap-2">
+                <TrustScoreBadge score={alias.trust_score} size="md" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/dashboard/aliases/${id}/trust`)}
+                >
+                  View Report
+                </Button>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Current Address</span>

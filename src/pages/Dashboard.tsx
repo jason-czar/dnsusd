@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Plus, Search, Home as HomeIcon } from "lucide-react";
+import { LogOut, Plus, Search, Home as HomeIcon, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
@@ -83,7 +83,7 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/")}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export default function Dashboard() {
                   Resolve Alias
                 </CardTitle>
                 <CardDescription>
-                  Look up wallet addresses from domains and ENS names
+                  Look up wallet addresses from domains
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -114,6 +114,23 @@ export default function Dashboard() {
               <CardContent>
                 <Button className="w-full">
                   View Aliases
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/monitoring")}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Monitoring
+                </CardTitle>
+                <CardDescription>
+                  Configure alerts and monitoring
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  Setup Alerts
                 </Button>
               </CardContent>
             </Card>

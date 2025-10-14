@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import AliasesList from "./pages/AliasesList";
 import AddAlias from "./pages/AddAlias";
 import AliasDetail from "./pages/AliasDetail";
+import TrustReport from "./pages/TrustReport";
+import Monitoring from "./pages/Monitoring";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/dashboard/aliases" element={<AliasesList />} />
           <Route path="/dashboard/aliases/new" element={<AddAlias />} />
           <Route path="/dashboard/aliases/:id" element={<AliasDetail />} />
+          <Route path="/dashboard/aliases/:id/trust" element={<TrustReport />} />
+          <Route path="/dashboard/monitoring" element={<Monitoring />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/tos" element={<TOS />} />
           <Route path="/policy" element={<Policy />} />
