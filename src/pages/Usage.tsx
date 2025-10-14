@@ -16,6 +16,7 @@ export default function Usage() {
     avgResponseTime: 0,
     errorRate: 0,
     endpointBreakdown: [] as { endpoint: string; count: number }[],
+    rateLimit: { limit: 1000, remaining: 1000 },
   });
 
   useEffect(() => {
@@ -82,12 +83,17 @@ export default function Usage() {
       .map(([endpoint, count]) => ({ endpoint, count }))
       .sort((a, b) => b.count - a.count);
 
+    // Calculate rate limit status
+    const freeLimit = 1000;
+    const remaining = Math.max(0, freeLimit - monthlyCount);
+
     setStats({
       totalCalls: totalCount,
       thisMonth: monthlyCount,
       avgResponseTime,
       errorRate,
       endpointBreakdown,
+      rateLimit: { limit: freeLimit, remaining },
     });
   };
 
@@ -142,13 +148,30 @@ export default function Usage() {
                   </span>
                 </div>
                 <Progress value={usagePercentage} />
+                <div className="flex justify-between mt-2">
+                  <span className="text-xs text-muted-foreground">
+                    {stats.rateLimit.remaining.toLocaleString()} calls remaining
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Resets monthly
+                  </span>
+                </div>
               </div>
               
-              {usagePercentage > 80 && (
+              {usagePercentage >= 100 && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-destructive">
+                    <AlertCircle className="inline mr-2 h-4 w-4" />
+                    Rate limit reached! Upgrade to Pro to continue.
+                  </p>
+                </div>
+              )}
+              
+              {usagePercentage >= 80 && usagePercentage < 100 && (
                 <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
                   <p className="text-sm">
                     <AlertCircle className="inline mr-2 h-4 w-4" />
-                    You're approaching your monthly limit. Consider upgrading to Pro.
+                    You're approaching your monthly limit ({usagePercentage.toFixed(0)}% used). Consider upgrading to Pro.
                   </p>
                 </div>
               )}

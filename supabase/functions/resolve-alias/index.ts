@@ -13,32 +13,71 @@ const corsHeaders = {
 };
 
 /**
- * Rate limiting map (in-memory, simple implementation)
- * Production would use Redis or proper rate limiting service
+ * Rate limiting configuration by tier
  */
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMITS = {
+  free: { limit: 1000, windowMs: 30 * 24 * 60 * 60 * 1000 }, // 1000/month
+  pro: { limit: 100000, windowMs: 30 * 24 * 60 * 60 * 1000 }, // 100k/month
+  enterprise: { limit: Number.MAX_SAFE_INTEGER, windowMs: 30 * 24 * 60 * 60 * 1000 }, // unlimited
+  anonymous: { limit: 10, windowMs: 60 * 60 * 1000 } // 10/hour for non-authenticated
+};
 
-function checkRateLimit(identifier: string, limit: number = 100, windowMs: number = 60000): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(identifier);
+/**
+ * Check rate limit for user based on tier
+ */
+async function checkRateLimit(
+  userId: string | null, 
+  tier: 'free' | 'pro' | 'enterprise' = 'free'
+): Promise<{ allowed: boolean; remaining: number; resetAt: number; limit: number }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(identifier, { count: 1, resetAt: now + windowMs });
-    return true;
+  // Get the rate limit config for this tier
+  const config = userId ? RATE_LIMITS[tier] : RATE_LIMITS.anonymous;
+  
+  // Calculate window start time
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - config.windowMs);
+
+  // Count requests in current window
+  let query = supabase
+    .from('api_usage')
+    .select('id', { count: 'exact', head: true })
+    .eq('endpoint', '/resolve-alias')
+    .gte('created_at', windowStart.toISOString());
+
+  if (userId) {
+    query = query.eq('user_id', userId);
   }
 
-  if (record.count >= limit) {
-    return false;
+  const { count, error } = await query;
+
+  if (error) {
+    console.error('[RateLimit] Error checking rate limit:', error);
+    // Fail open - allow the request if we can't check
+    return { 
+      allowed: true, 
+      remaining: config.limit, 
+      resetAt: now.getTime() + config.windowMs,
+      limit: config.limit
+    };
   }
 
-  record.count++;
-  return true;
+  const currentCount = count || 0;
+  const allowed = currentCount < config.limit;
+  const remaining = Math.max(0, config.limit - currentCount);
+  const resetAt = now.getTime() + config.windowMs;
+
+  return { allowed, remaining, resetAt, limit: config.limit };
 }
 
 serve(async (req) => {
   const startTime = Date.now();
   let statusCode = 200;
   let errorMessage: string | null = null;
+  let userId: string | null = null;
+  let rateLimitResult: { allowed: boolean; remaining: number; resetAt: number; limit: number } | null = null;
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -59,16 +98,48 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting (by IP or API key)
-    const identifier = req.headers.get('x-forwarded-for') || 'unknown';
-    if (!checkRateLimit(identifier)) {
+    // Extract user ID for rate limiting
+    const authHeader = req.headers.get('authorization');
+    userId = null;
+    let userTier: 'free' | 'pro' | 'enterprise' = 'free';
+    
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data: { user } } = await supabase.auth.getUser(token);
+        userId = user?.id || null;
+        
+        // TODO: Fetch user tier from database when billing is implemented
+        // For now, everyone is on free tier
+        userTier = 'free';
+      } catch (e) {
+        console.log('[Main] Could not extract user from token');
+      }
+    }
+
+    // Rate limiting
+    rateLimitResult = await checkRateLimit(userId, userTier);
+    
+    if (!rateLimitResult.allowed) {
       return new Response(
         JSON.stringify({ 
           error: 'Rate limit exceeded',
-          message: 'Too many requests. Please try again later.' 
+          message: `Rate limit of ${rateLimitResult.limit} requests exceeded. Resets at ${new Date(rateLimitResult.resetAt).toISOString()}`,
+          limit: rateLimitResult.limit,
+          remaining: 0,
+          resetAt: rateLimitResult.resetAt
         }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetAt.toString()
+          },
           status: 429 
         }
       );
@@ -190,21 +261,6 @@ serve(async (req) => {
 
     // Track API usage
     const responseTime = Date.now() - startTime;
-    const authHeader = req.headers.get('authorization');
-    let userId = null;
-    
-    if (authHeader) {
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        const { data: { user } } = await supabase.auth.getUser(token);
-        userId = user?.id || null;
-      } catch (e) {
-        console.log('[Main] Could not extract user from token');
-      }
-    }
 
     try {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -226,11 +282,17 @@ serve(async (req) => {
       // Don't fail the request if usage tracking fails
     }
 
-    // Return result
+    // Return result with rate limit headers
     return new Response(
       JSON.stringify(result),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.resetAt.toString()
+        }
       }
     );
 
@@ -241,21 +303,6 @@ serve(async (req) => {
 
     // Track failed API usage
     const responseTime = Date.now() - startTime;
-    const authHeader = req.headers.get('authorization');
-    let userId = null;
-    
-    if (authHeader) {
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        const { data: { user } } = await supabase.auth.getUser(token);
-        userId = user?.id || null;
-      } catch (e) {
-        console.log('[Main] Could not extract user from token');
-      }
-    }
 
     try {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
