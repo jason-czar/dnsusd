@@ -6,7 +6,6 @@ import { Shield, Zap, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { ResolverResult } from "@/types/resolver";
-import keyLogo from "@/assets/key-logo-green.png";
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
@@ -34,8 +33,8 @@ const Index = () => {
         <div className="container mx-auto px-4 py-6">
           <nav className="flex items-center justify-between" aria-label="Main navigation">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <img src={keyLogo} alt="BlueKeyID Logo" className="w-8 h-8" aria-hidden="true" />
+              <div className="p-2 rounded-lg bg-primary/10 glow-cyan">
+                <Shield className="w-6 h-6 text-primary" aria-hidden="true" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">BlueKeyID</h1>
