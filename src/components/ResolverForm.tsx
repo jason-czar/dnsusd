@@ -181,7 +181,7 @@ export const ResolverForm = ({ onResult, isLoading, setIsLoading }: ResolverForm
 
       {/* Sample Aliases */}
       <div className="flex flex-col items-center space-y-3">
-        <Label className="text-base font-medium">Sample Aliases</Label>
+        <Label className="text-lg font-medium">Sample Aliases</Label>
         <div className="flex flex-wrap gap-2 justify-center">
           {sampleAliases.map((sampleAlias) => (
             <Button
