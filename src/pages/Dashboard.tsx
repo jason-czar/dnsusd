@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key, Settings, Building2 } from "lucide-react";
+import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key, Settings, Building2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -230,6 +230,23 @@ export default function Dashboard() {
               <CardContent>
                 <Button variant="outline-accent" className="w-full">
                   View API Docs
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/protocol")}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  PDI Protocol
+                </CardTitle>
+                <CardDescription>
+                  Technical specification v1.2
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline-accent" className="w-full">
+                  View Protocol
                 </Button>
               </CardContent>
             </Card>

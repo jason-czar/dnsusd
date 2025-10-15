@@ -29,6 +29,7 @@ import Organizations from "./pages/Organizations";
 import OrganizationNew from "./pages/OrganizationNew";
 import OrganizationMembers from "./pages/OrganizationMembers";
 import OrganizationSettings from "./pages/OrganizationSettings";
+import Protocol from "./pages/Protocol";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/docs/api" element={<ApiDocs />} />
             <Route path="/docs/sdk" element={<SdkDocs />} />
             <Route path="/docs/webhooks" element={<WebhookTester />} />
+            <Route path="/protocol" element={<Protocol />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/tos" element={<TOS />} />
