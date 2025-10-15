@@ -76,12 +76,57 @@ serve(async (req) => {
       );
     }
 
-    // Validate callback_url format
-    try {
-      new URL(callback_url);
-    } catch {
+    // Validate callback_url format and prevent SSRF
+    function isValidWebhookUrl(urlString: string): { valid: boolean; error?: string } {
+      let url: URL;
+      
+      try {
+        url = new URL(urlString);
+      } catch {
+        return { valid: false, error: 'Invalid URL format' };
+      }
+      
+      // Only allow http/https
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        return { valid: false, error: 'Only HTTP/HTTPS protocols allowed' };
+      }
+      
+      // Block localhost/internal IPs
+      const hostname = url.hostname.toLowerCase();
+      const blockedPatterns = [
+        'localhost',
+        '127.',
+        '0.0.0.0',
+        '10.',
+        '172.16.', '172.17.', '172.18.', '172.19.',
+        '172.20.', '172.21.', '172.22.', '172.23.',
+        '172.24.', '172.25.', '172.26.', '172.27.',
+        '172.28.', '172.29.', '172.30.', '172.31.',
+        '192.168.',
+        '169.254.',
+        'metadata',
+        'internal'
+      ];
+      
+      for (const pattern of blockedPatterns) {
+        if (hostname.includes(pattern)) {
+          return { valid: false, error: 'Internal URLs not allowed' };
+        }
+      }
+      
+      // Block non-standard ports for additional security
+      const port = url.port || (url.protocol === 'https:' ? '443' : '80');
+      if (!['80', '443', '8080', '8443'].includes(port)) {
+        return { valid: false, error: 'Non-standard ports not allowed' };
+      }
+      
+      return { valid: true };
+    }
+
+    const urlValidation = isValidWebhookUrl(callback_url);
+    if (!urlValidation.valid) {
       return new Response(
-        JSON.stringify({ error: 'Invalid callback_url format' }),
+        JSON.stringify({ error: urlValidation.error }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400 
@@ -168,6 +213,7 @@ serve(async (req) => {
         alias_id: aliasId,
         callback_url: callback_url,
         secret_token: secretToken,
+        user_id: user.id,
         is_active: true
       })
       .select()

@@ -179,6 +179,37 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Check authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Verify user with anon key for auth
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Use service role for database operations
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -186,6 +217,52 @@ Deno.serve(async (req) => {
 
     const { aliasId, domain, verificationMethod, expectedAddresses } =
       await req.json() as VerificationRequest;
+
+    // Verify alias ownership
+    const { data: alias, error: aliasError } = await supabase
+      .from('aliases')
+      .select('user_id, organization_id')
+      .eq('id', aliasId)
+      .single();
+
+    if (aliasError || !alias) {
+      return new Response(
+        JSON.stringify({ error: 'Alias not found' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Check if user owns the alias or is org member
+    if (alias.user_id !== user.id && !alias.organization_id) {
+      return new Response(
+        JSON.stringify({ error: 'Not authorized to verify this alias' }),
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // If organization alias, check membership
+    if (alias.organization_id) {
+      const { data: canEdit, error: roleError } = await supabase.rpc(
+        'can_edit_organization_alias',
+        { _user_id: user.id, _organization_id: alias.organization_id }
+      );
+
+      if (roleError || !canEdit) {
+        return new Response(
+          JSON.stringify({ error: 'Not authorized to verify this alias' }),
+          { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
 
     console.log('Verifying alias:', { aliasId, domain, verificationMethod });
 

@@ -617,6 +617,7 @@ export type Database = {
           is_active: boolean
           last_triggered_at: string | null
           secret_token: string
+          user_id: string
         }
         Insert: {
           alias_id: string
@@ -626,6 +627,7 @@ export type Database = {
           is_active?: boolean
           last_triggered_at?: string | null
           secret_token: string
+          user_id: string
         }
         Update: {
           alias_id?: string
@@ -635,6 +637,7 @@ export type Database = {
           is_active?: boolean
           last_triggered_at?: string | null
           secret_token?: string
+          user_id?: string
         }
         Relationships: [
           {
