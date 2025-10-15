@@ -39,7 +39,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Universal Crypto Address Identity Verification</h1>
-                <p className="text-sm text-muted-foreground">Universal Crypto Alias Resolver</p>
+                <p className="text-sm text-muted-foreground">Universal Crypto Address Identity Verification</p>
               </div>
             </div>
             {isLoggedIn ? <Link to="/dashboard">
