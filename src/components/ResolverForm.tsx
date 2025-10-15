@@ -78,7 +78,7 @@ export const ResolverForm = ({ onResult, isLoading, setIsLoading }: ResolverForm
             <Input
               id="alias"
               type="text"
-              placeholder="x.crypto or vitalik.eth"
+              placeholder="example.com or vitalik.eth"
               value={alias}
               onChange={(e) => setAlias(e.target.value)}
               className="h-12 text-lg border-border focus:border-primary focus:ring-primary"
