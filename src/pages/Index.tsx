@@ -38,7 +38,7 @@ const Index = () => {
                 <img src={keyLogo} alt="BlueKeyID Logo" className="w-8 h-8" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Universal Crypto Address Identity Verification</h1>
+                <h1 className="text-2xl font-bold text-foreground">BlueKeyID</h1>
                 <p className="text-sm text-muted-foreground">Universal Crypto Address Identity Verification</p>
               </div>
             </div>
