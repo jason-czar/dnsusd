@@ -7,6 +7,65 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ResolutionOrchestrator } from './orchestrator.ts';
 
+// Input validation
+interface RequestInput {
+  alias: string;
+  chain?: string;
+}
+
+const VALID_CHAINS = [
+  'ethereum', 'bitcoin', 'zilliqa', 'stacks', 'fio', 
+  'lightning', 'cardano', 'all'
+];
+
+function validateInput(input: any): { valid: boolean; error?: string; data?: RequestInput } {
+  // Validate alias
+  if (!input.alias || typeof input.alias !== 'string') {
+    return { valid: false, error: 'Missing or invalid alias parameter' };
+  }
+
+  const alias = input.alias.trim();
+
+  // Length validation
+  if (alias.length === 0) {
+    return { valid: false, error: 'Alias cannot be empty' };
+  }
+  if (alias.length > 255) {
+    return { valid: false, error: 'Alias exceeds maximum length of 255 characters' };
+  }
+
+  // Character validation - allow alphanumeric, dots, hyphens, underscores, @, $, and forward slashes
+  if (!/^[a-zA-Z0-9._@$/-]+$/.test(alias)) {
+    return { valid: false, error: 'Alias contains invalid characters. Only alphanumeric, dots, hyphens, underscores, @, $, and / are allowed' };
+  }
+
+  // Block internal/localhost patterns
+  const blockedPatterns = [
+    'localhost', '127.0.0.1', '0.0.0.0', '169.254', 
+    'metadata.google', 'metadata.aws', 'metadata.azure'
+  ];
+  const lowerAlias = alias.toLowerCase();
+  for (const pattern of blockedPatterns) {
+    if (lowerAlias.includes(pattern)) {
+      return { valid: false, error: 'Invalid alias: internal addresses not allowed' };
+    }
+  }
+
+  // Validate chain if provided
+  if (input.chain !== undefined && input.chain !== null) {
+    if (typeof input.chain !== 'string') {
+      return { valid: false, error: 'Invalid chain parameter type' };
+    }
+    const chain = input.chain.toLowerCase();
+    if (!VALID_CHAINS.includes(chain)) {
+      return { valid: false, error: `Invalid chain specified. Must be one of: ${VALID_CHAINS.join(', ')}` };
+    }
+    return { valid: true, data: { alias, chain } };
+  }
+
+  return { valid: true, data: { alias, chain: input.chain } };
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -85,18 +144,21 @@ serve(async (req) => {
   }
 
   try {
-    const { alias, chain } = await req.json();
+    const requestBody = await req.json();
 
     // Validate input
-    if (!alias || typeof alias !== 'string') {
+    const validation = validateInput(requestBody);
+    if (!validation.valid) {
       return new Response(
-        JSON.stringify({ error: 'Missing or invalid alias parameter' }),
+        JSON.stringify({ error: validation.error }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400 
         }
       );
     }
+
+    const { alias, chain } = validation.data!;
 
     // Extract user ID for rate limiting
     const authHeader = req.headers.get('authorization');

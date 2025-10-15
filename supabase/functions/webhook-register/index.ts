@@ -26,9 +26,34 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
+    // Initialize Supabase client for auth
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      console.error('[WebhookRegister] Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
     const { alias, callback_url, secret } = await req.json();
 
-    console.log(`[WebhookRegister] Registering webhook for alias: ${alias}`);
+    console.log(`[WebhookRegister] Registering webhook for alias: ${alias}, user: ${user.id}`);
 
     // Validate input
     if (!alias || typeof alias !== 'string') {
@@ -64,12 +89,11 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Initialize Supabase client with service role for alias operations
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find or create alias
+    // Find existing alias
     const { data: existingAlias } = await supabase
       .from('aliases')
       .select('*')
@@ -77,13 +101,16 @@ serve(async (req) => {
       .single();
 
     let aliasId: string;
+    let aliasUserId: string | null = null;
+    let aliasOrgId: string | null = null;
 
     if (!existingAlias) {
-      // Create alias entry
+      // Create alias entry owned by the authenticated user
       const { data: newAlias, error: createError } = await supabase
         .from('aliases')
         .insert({
           alias_string: alias,
+          user_id: user.id,
           current_address: null,
           current_currency: null,
           current_source: null
@@ -92,12 +119,43 @@ serve(async (req) => {
         .single();
 
       if (createError || !newAlias) {
+        console.error('[WebhookRegister] Failed to create alias:', createError);
         throw new Error('Failed to create alias');
       }
 
       aliasId = newAlias.id;
+      aliasUserId = newAlias.user_id;
+      aliasOrgId = newAlias.organization_id;
     } else {
       aliasId = existingAlias.id;
+      aliasUserId = existingAlias.user_id;
+      aliasOrgId = existingAlias.organization_id;
+    }
+
+    // Verify user owns the alias or is a member of the organization
+    if (aliasUserId !== user.id) {
+      // Check organization membership if applicable
+      if (aliasOrgId) {
+        const { data: isMember } = await supabase
+          .rpc('is_organization_member', { 
+            _user_id: user.id, 
+            _organization_id: aliasOrgId 
+          });
+        
+        if (!isMember) {
+          console.log(`[WebhookRegister] User ${user.id} not authorized for alias ${aliasId}`);
+          return new Response(
+            JSON.stringify({ error: 'Not authorized for this alias' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+          );
+        }
+      } else {
+        console.log(`[WebhookRegister] User ${user.id} not authorized for alias ${aliasId}`);
+        return new Response(
+          JSON.stringify({ error: 'Not authorized for this alias' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+        );
+      }
     }
 
     // Generate secret token if not provided
