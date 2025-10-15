@@ -67,7 +67,11 @@ const Index = () => {
             <span>14+ Naming Systems Supported</span>
           </div>
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Universal Crypto Address Identity Verification</h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-4">Link and verify crypto wallet addresses across DNS domains (.com, .io, etc) and email addresses, ENS, Lightning Network, Unstoppable Domains, Handshake, and 10+ more naming systems.</p>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
+            Link and verify crypto wallet addresses across DNS domains (.com, .io, etc) and email addresses, ENS, Lightning Network, Unstoppable Domains, Handshake, and 10+ more naming systems.
+            <br /><br />
+            Wallet providers - integrate with our API so your users have access to transact across all alias providers, chains, & naming systems.
+          </p>
           
         </section>
 
