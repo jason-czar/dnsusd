@@ -143,7 +143,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button variant="outline-accent" className="w-full">
                   Go to Resolver
                 </Button>
               </CardContent>
@@ -160,7 +160,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button variant="outline-accent" className="w-full">
                   View Aliases
                 </Button>
               </CardContent>
@@ -177,7 +177,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button variant="outline-accent" className="w-full">
                   Setup Alerts
                 </Button>
               </CardContent>
@@ -194,7 +194,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button variant="outline-accent" className="w-full">
                   View Usage
                 </Button>
               </CardContent>
@@ -211,7 +211,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button variant="outline-accent" className="w-full">
                   Manage Keys
                 </Button>
               </CardContent>
@@ -228,7 +228,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button variant="outline-accent" className="w-full">
                   View API Docs
                 </Button>
               </CardContent>
@@ -245,7 +245,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button variant="outline-accent" className="w-full">
                   Manage Organizations
                 </Button>
               </CardContent>
