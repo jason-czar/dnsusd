@@ -191,7 +191,7 @@ export const ResolverForm = ({ onResult, isLoading, setIsLoading }: ResolverForm
               size="sm"
               onClick={() => handleSampleClick(sampleAlias)}
               disabled={isLoading}
-              className="text-xs hover:bg-primary/10 hover:border-primary transition-smooth"
+              className="text-sm hover:bg-primary/10 hover:border-primary transition-smooth"
             >
               {sampleAlias}
             </Button>
