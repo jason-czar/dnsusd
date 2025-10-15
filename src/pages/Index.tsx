@@ -41,7 +41,7 @@ const Index = () => {
               />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">BlueKeyID</h1>
-                <p className="text-sm text-muted-foreground">Universal Crypto Address Identity Verification</p>
+                <p className="text-sm text-muted-foreground hidden sm:block">Universal Crypto Address Identity Verification</p>
               </div>
             </div>
             {isLoggedIn ? <Link to="/dashboard">
