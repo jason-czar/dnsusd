@@ -132,9 +132,9 @@ export default function Dashboard() {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/")}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[180px]" onClick={() => navigate("/")}>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center gap-2 justify-center">
                   <Search className="h-5 w-5" />
                   Resolve Alias
                 </CardTitle>
@@ -142,16 +142,11 @@ export default function Dashboard() {
                   Look up wallet addresses from domains
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button className="w-full">
-                  Go to Resolver
-                </Button>
-              </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/aliases")}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[180px]" onClick={() => navigate("/dashboard/aliases")}>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center gap-2 justify-center">
                   <Plus className="h-5 w-5" />
                   Manage Aliases
                 </CardTitle>
@@ -159,16 +154,11 @@ export default function Dashboard() {
                   View and manage your domain aliases
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button className="w-full">
-                  View Aliases
-                </Button>
-              </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/monitoring")}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[180px]" onClick={() => navigate("/dashboard/monitoring")}>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center gap-2 justify-center">
                   <Bell className="h-5 w-5" />
                   Monitoring
                 </CardTitle>
@@ -176,16 +166,11 @@ export default function Dashboard() {
                   Configure alerts and monitoring
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button className="w-full">
-                  Setup Alerts
-                </Button>
-              </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/usage")}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[180px]" onClick={() => navigate("/dashboard/usage")}>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center gap-2 justify-center">
                   <BarChart className="h-5 w-5" />
                   Usage & Billing
                 </CardTitle>
@@ -193,16 +178,11 @@ export default function Dashboard() {
                   Track API consumption
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button className="w-full">
-                  View Usage
-                </Button>
-              </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/dashboard/api-keys")}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[180px]" onClick={() => navigate("/dashboard/api-keys")}>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center gap-2 justify-center">
                   <Key className="h-5 w-5" />
                   API Keys
                 </CardTitle>
@@ -210,16 +190,11 @@ export default function Dashboard() {
                   Generate and manage API keys
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button className="w-full">
-                  Manage Keys
-                </Button>
-              </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/docs/api")}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[180px]" onClick={() => navigate("/docs/api")}>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center gap-2 justify-center">
                   <Code2 className="h-5 w-5" />
                   API Documentation
                 </CardTitle>
@@ -227,16 +202,11 @@ export default function Dashboard() {
                   Integrate with our REST API
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button className="w-full">
-                  View API Docs
-                </Button>
-              </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/organizations")}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[180px]" onClick={() => navigate("/organizations")}>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center gap-2 justify-center">
                   <Building2 className="h-5 w-5" />
                   Organizations
                 </CardTitle>
@@ -244,11 +214,6 @@ export default function Dashboard() {
                   Manage teams and collaboration
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button className="w-full">
-                  Manage Organizations
-                </Button>
-              </CardContent>
             </Card>
           </div>
 
