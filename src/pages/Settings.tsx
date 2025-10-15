@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, User, Lock, Bell, Trash2, Save, Settings as SettingsIcon } from "lucide-react";
+import { ArrowLeft, User, Lock, Bell, Trash2, Save, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { z } from "zod";
 
 const displayNameSchema = z.string().trim().min(1, "Display name is required").max(100, "Display name must be less than 100 characters");
@@ -166,6 +166,16 @@ export default function Settings() {
       } else {
         toast.error("Failed to change password: " + error.message);
       }
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate("/auth");
+    } catch (error: any) {
+      toast.error("Failed to sign out: " + error.message);
     }
   };
 
@@ -407,6 +417,34 @@ export default function Settings() {
               <Save size={16} className="mr-2" />
               Save Settings
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Session Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LogOut size={20} />
+              Session Management
+            </CardTitle>
+            <CardDescription>Sign out of your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Sign Out</Label>
+                <p className="text-sm text-muted-foreground">
+                  Sign out of your account on this device
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+              >
+                <LogOut size={16} className="mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

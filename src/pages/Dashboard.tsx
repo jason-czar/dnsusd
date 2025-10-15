@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key, Settings, Building2, FileText } from "lucide-react";
+import { Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key, Settings, Building2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -75,13 +75,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully",
-    });
-  };
 
   if (loading) {
     return (
@@ -110,10 +103,6 @@ export default function Dashboard() {
             <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/settings")}>
               <Settings className="h-4 w-4 mr-2" />
               Settings
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
             </Button>
           </div>
         </div>
