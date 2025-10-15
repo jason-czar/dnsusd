@@ -66,7 +66,7 @@ const Index = () => {
             <Zap className="w-4 h-4" aria-hidden="true" />
             <span>14+ Naming Systems Supported</span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-bold mb-9 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Universal Crypto Address Identity Verification</h2>
+          <h2 className="text-4xl md:text-6xl font-bold mb-9 leading-tight pb-2 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Universal Crypto Address Identity Verification</h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             Link and verify crypto wallet addresses across DNS domains (.com, .io, etc) and email addresses, ENS, Lightning Network, Unstoppable Domains, Handshake, and 10+ more naming systems.
             <br /><br />
