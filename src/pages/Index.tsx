@@ -6,7 +6,7 @@ import { Shield, Zap, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { ResolverResult } from "@/types/resolver";
-import keyLogo from "@/assets/key-logo-green.svg";
+import keyLogo from "@/assets/key-logo-green.png";
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
