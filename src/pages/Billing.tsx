@@ -345,7 +345,7 @@ const Billing = () => {
                   <CardHeader>
                     <CardTitle>Pro Plan</CardTitle>
                     <CardDescription>For individual power users</CardDescription>
-                    <div className="text-3xl font-bold mt-4">$29<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+                    <div className="text-3xl font-bold mt-4">$49<span className="text-lg font-normal text-muted-foreground">/month</span></div>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2 mb-6">
