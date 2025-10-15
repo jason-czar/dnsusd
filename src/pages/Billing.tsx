@@ -94,11 +94,15 @@ const Billing = () => {
   const handleUpgrade = async (tier: string) => {
     try {
       if (isPersonalContext) {
-        // Personal checkout - to be implemented
-        toast({
-          title: "Coming Soon",
-          description: "Personal subscriptions will be available soon",
+        const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+          body: { tier }
         });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.open(data.url, "_blank");
+        }
       } else if (currentOrganization) {
         const { data, error } = await supabase.functions.invoke("create-organization-checkout", {
           body: { organization_id: currentOrganization.id, tier }
@@ -362,7 +366,7 @@ const Billing = () => {
                         Advanced monitoring
                       </li>
                     </ul>
-                    <Button className="w-full">Upgrade to Pro</Button>
+                    <Button className="w-full" onClick={() => handleUpgrade("pro")}>Upgrade to Pro</Button>
                   </CardContent>
                 </Card>
               </div>

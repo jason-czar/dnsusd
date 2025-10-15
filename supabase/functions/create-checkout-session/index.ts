@@ -48,7 +48,7 @@ serve(async (req) => {
 
     // Define pricing
     const priceIds: Record<string, string> = {
-      pro: Deno.env.get("STRIPE_PRO_PRICE_ID") || "",
+      pro: Deno.env.get("STRIPE_PERSONAL_PRO_PRICE_ID") || "",
       enterprise: Deno.env.get("STRIPE_ENTERPRISE_PRICE_ID") || "",
     };
 
