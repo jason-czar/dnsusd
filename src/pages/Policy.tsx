@@ -13,7 +13,7 @@ const Policy = () => {
                 <Shield className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">AliasResolve</h1>
+                <h1 className="text-2xl font-bold text-foreground">BlueKeyID</h1>
                 <p className="text-sm text-muted-foreground">Crypto Alias Resolver - v0</p>
               </div>
             </Link>
@@ -30,7 +30,7 @@ const Policy = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Introduction</h2>
             <p className="text-muted-foreground mb-4">
-              This Privacy Policy describes how AliasResolve ("we", "our", or "the Service") collects, uses, and protects 
+              This Privacy Policy describes how BlueKeyID ("we", "our", or "the Service") collects, uses, and protects 
               your information when you use our crypto alias resolution service.
             </p>
           </section>
@@ -61,7 +61,7 @@ const Policy = () => {
 
             <h3 className="text-xl font-semibold mb-3 text-foreground">2.3 No User Accounts</h3>
             <p className="text-muted-foreground mb-4">
-              Currently, AliasResolve does not require user registration or maintain user accounts. Therefore, we do not 
+              Currently, BlueKeyID does not require user registration or maintain user accounts. Therefore, we do not 
               collect personal identification information such as names, email addresses, or authentication credentials.
             </p>
           </section>
@@ -216,7 +216,7 @@ const Policy = () => {
       <footer className="border-t border-border/50 mt-20">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>AliasResolve v0 - Built for crypto alias resolution</p>
+            <p>BlueKeyID v0 - Built for crypto alias resolution</p>
             <div className="flex gap-6">
               <Link to="/tos" className="hover:text-foreground transition-smooth">Terms of Service</Link>
               <Link to="/policy" className="hover:text-foreground transition-smooth">Privacy Policy</Link>

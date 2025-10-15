@@ -99,7 +99,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <HomeIcon className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">AliasResolve</h1>
+              <h1 className="text-xl font-bold">BlueKeyID</h1>
             </div>
             <div className="w-64">
               <OrganizationSwitcher />
@@ -126,7 +126,7 @@ export default function Dashboard() {
           <div className="text-center space-y-4">
             <h2 className="text-4xl font-bold">Dashboard</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Manage your crypto aliases and domains with OpenAlias standard
+              Manage your crypto aliases and domains
             </p>
           </div>
 
@@ -300,7 +300,7 @@ export default function Dashboard() {
           {/* Getting Started */}
           <Card>
             <CardHeader>
-              <CardTitle>Getting Started with OpenAlias</CardTitle>
+              <CardTitle>Getting Started</CardTitle>
               <CardDescription>
                 Follow these steps to set up your first domain alias
               </CardDescription>

@@ -13,7 +13,7 @@ const TOS = () => {
                 <Shield className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">AliasResolve</h1>
+                <h1 className="text-2xl font-bold text-foreground">BlueKeyID</h1>
                 <p className="text-sm text-muted-foreground">Crypto Alias Resolver - v0</p>
               </div>
             </Link>
@@ -30,7 +30,7 @@ const TOS = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Acceptance of Terms</h2>
             <p className="text-muted-foreground mb-4">
-              By accessing and using AliasResolve ("the Service"), you accept and agree to be bound by these Terms of Service. 
+              By accessing and using BlueKeyID ("the Service"), you accept and agree to be bound by these Terms of Service. 
               If you do not agree to these terms, please do not use the Service.
             </p>
           </section>
@@ -38,8 +38,8 @@ const TOS = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Description of Service</h2>
             <p className="text-muted-foreground mb-4">
-              AliasResolve provides a crypto alias resolution service that allows users to resolve domain names and aliases 
-              to cryptocurrency wallet addresses through various methods including DNS TXT records, ENS, and other supported 
+              BlueKeyID provides a crypto alias resolution service that allows users to resolve domain names and aliases 
+              to cryptocurrency wallet addresses through various methods including DNS TXT records, ENS, and other supported
               naming systems.
             </p>
           </section>
@@ -78,8 +78,8 @@ const TOS = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Limitation of Liability</h2>
             <p className="text-muted-foreground mb-4">
-              To the maximum extent permitted by law, AliasResolve and its operators shall not be liable for any indirect, 
-              incidental, special, consequential, or punitive damages, including loss of funds, resulting from your use of 
+              To the maximum extent permitted by law, BlueKeyID and its operators shall not be liable for any indirect, 
+              incidental, special, consequential, or punitive damages, including loss of funds, resulting from your use of
               or inability to use the Service.
             </p>
           </section>
@@ -130,7 +130,7 @@ const TOS = () => {
       <footer className="border-t border-border/50 mt-20">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>AliasResolve v0 - Built for crypto alias resolution</p>
+            <p>BlueKeyID v0 - Built for crypto alias resolution</p>
             <div className="flex gap-6">
               <Link to="/tos" className="hover:text-foreground transition-smooth">Terms of Service</Link>
               <Link to="/policy" className="hover:text-foreground transition-smooth">Privacy Policy</Link>

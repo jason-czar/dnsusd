@@ -131,7 +131,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <div className="flex flex-col items-center md:items-start gap-2">
-              <p className="font-semibold text-foreground">AliasResolve</p>
+              <p className="font-semibold text-foreground">BlueKeyID</p>
               <p>Universal crypto alias resolver for Web3</p>
             </div>
             <nav className="flex gap-6" aria-label="Footer navigation">

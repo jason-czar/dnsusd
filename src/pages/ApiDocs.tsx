@@ -26,7 +26,7 @@ export default function ApiDocs() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">API Documentation</h1>
-            <p className="text-muted-foreground">Integrate AliasResolve into your application</p>
+            <p className="text-muted-foreground">Integrate BlueKeyID into your application</p>
           </div>
           <Button variant="outline" onClick={() => navigate("/dashboard")}>
             <ArrowLeft size={16} className="mr-2" />

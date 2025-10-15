@@ -137,7 +137,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">AliasResolve</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">BlueKeyID</CardTitle>
           <CardDescription className="text-center">
             Manage your crypto aliases and domains
           </CardDescription>
