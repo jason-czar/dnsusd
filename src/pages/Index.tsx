@@ -82,7 +82,7 @@ const Index = () => {
         <section className="mt-20">
           <h3 className="text-2xl font-bold text-center mb-8 text-foreground">Supported Naming Systems</h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-            {["ENS (.eth domains)", "DNS TXT Records", "Lightning Network", "Unstoppable Domains", "Handshake (.hns)", "Namecoin", "ZNS (Zilliqa)", "CNS (Crypto.com)", "BNS (Bitcoin)", "FIO Protocol", "Nostr addresses", "PayString", "Webfinger", ".well-known/pay"].map(system => <div key={system} className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border border-border/50">
+            {["ENS (.eth domains)", "DNS Domains & Email Addresses", "Lightning Network", "Unstoppable Domains", "Handshake (.hns)", "Namecoin", "ZNS (Zilliqa)", "CNS (Crypto.com)", "BNS (Bitcoin)", "FIO Protocol", "Nostr addresses", "PayString", "Webfinger", ".well-known/pay"].map(system => <div key={system} className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border border-border/50">
                 <Shield className="w-4 h-4 text-primary flex-shrink-0" aria-hidden="true" />
                 <span className="text-sm text-foreground">{system}</span>
               </div>)}
