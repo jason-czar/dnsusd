@@ -37,7 +37,7 @@ const Index = () => {
                 <Shield className="w-6 h-6 text-primary" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">AliasResolve</h1>
+                <h1 className="text-2xl font-bold text-foreground">BlueKeyID</h1>
                 <p className="text-sm text-muted-foreground">Universal Crypto Alias Resolver</p>
               </div>
             </div>
