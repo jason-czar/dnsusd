@@ -1,4 +1,4 @@
-export type Chain = 'bitcoin' | 'ethereum' | 'all';
+export type Chain = 'bitcoin' | 'ethereum' | 'zilliqa' | 'stacks' | 'fio' | 'lightning' | 'all';
 export type AliasType = 'dns_txt' | 'ens' | 'lightning' | 'paystring' | 'fio';
 export type Confidence = 'high' | 'medium' | 'low';
 

@@ -99,9 +99,13 @@ export const ResolverForm = ({ onResult, isLoading, setIsLoading }: ResolverForm
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Chains</SelectItem>
+                <SelectItem value="all">Auto Detect - All Chains</SelectItem>
                 <SelectItem value="bitcoin">Bitcoin</SelectItem>
                 <SelectItem value="ethereum">Ethereum</SelectItem>
+                <SelectItem value="zilliqa">Zilliqa</SelectItem>
+                <SelectItem value="stacks">Bitcoin Name System (Stacks)</SelectItem>
+                <SelectItem value="fio">FIO Protocol</SelectItem>
+                <SelectItem value="lightning">Lightning Network</SelectItem>
               </SelectContent>
             </Select>
           </div>
