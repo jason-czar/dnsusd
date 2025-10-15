@@ -42,6 +42,7 @@ serve(async (req) => {
         logStep("Checkout completed", { sessionId: session.id });
 
         const userId = session.metadata?.user_id;
+        const organizationId = session.metadata?.organization_id;
         const tier = session.metadata?.tier;
         
         if (!userId || !tier) {
@@ -53,6 +54,7 @@ serve(async (req) => {
           .from("subscriptions")
           .insert({
             user_id: userId,
+            organization_id: organizationId || null,
             tier: tier,
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: session.subscription as string,
@@ -61,15 +63,27 @@ serve(async (req) => {
 
         if (subError) throw subError;
 
-        // Update profile tier
-        const { error: profileError } = await supabaseClient
-          .from("profiles")
-          .update({ subscription_tier: tier })
-          .eq("id", userId);
+        // Update profile tier for personal subscriptions
+        if (!organizationId) {
+          const { error: profileError } = await supabaseClient
+            .from("profiles")
+            .update({ subscription_tier: tier })
+            .eq("id", userId);
 
-        if (profileError) throw profileError;
+          if (profileError) throw profileError;
+        } else {
+          // Log activity for organization subscriptions
+          await supabaseClient
+            .from("organization_activity_logs")
+            .insert({
+              organization_id: organizationId,
+              user_id: userId,
+              action: "subscription_updated",
+              metadata: { tier, status: "active" }
+            });
+        }
 
-        logStep("Subscription created", { userId, tier });
+        logStep("Subscription created", { userId, organizationId, tier });
         break;
       }
 
@@ -96,10 +110,10 @@ serve(async (req) => {
         const subscription = event.data.object as Stripe.Subscription;
         logStep("Subscription deleted", { subscriptionId: subscription.id });
 
-        // Get user_id from subscription
+        // Get user_id and organization_id from subscription
         const { data: subData } = await supabaseClient
           .from("subscriptions")
-          .select("user_id")
+          .select("user_id, organization_id")
           .eq("stripe_subscription_id", subscription.id)
           .single();
 
@@ -110,13 +124,27 @@ serve(async (req) => {
             .update({ status: "cancelled" })
             .eq("stripe_subscription_id", subscription.id);
 
-          // Revert profile to free tier
-          await supabaseClient
-            .from("profiles")
-            .update({ subscription_tier: "free" })
-            .eq("id", subData.user_id);
-
-          logStep("Subscription cancelled, user reverted to free tier");
+          if (!subData.organization_id) {
+            // Revert personal profile to free tier
+            await supabaseClient
+              .from("profiles")
+              .update({ subscription_tier: "free" })
+              .eq("id", subData.user_id);
+            
+            logStep("Personal subscription cancelled, user reverted to free tier");
+          } else {
+            // Log organization subscription cancellation
+            await supabaseClient
+              .from("organization_activity_logs")
+              .insert({
+                organization_id: subData.organization_id,
+                user_id: subData.user_id,
+                action: "subscription_updated",
+                metadata: { status: "cancelled" }
+              });
+            
+            logStep("Organization subscription cancelled");
+          }
         }
         break;
       }

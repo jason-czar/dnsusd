@@ -69,7 +69,11 @@ const Billing = () => {
   const handleManageSubscription = async () => {
     setManagingSubscription(true);
     try {
-      const { data, error } = await supabase.functions.invoke("manage-subscription");
+      // Use different function based on context
+      const functionName = isPersonalContext ? "manage-subscription" : "manage-organization-subscription";
+      const body = isPersonalContext ? {} : { organization_id: currentOrganization?.id };
+
+      const { data, error } = await supabase.functions.invoke(functionName, { body });
 
       if (error) throw error;
 
@@ -84,6 +88,34 @@ const Billing = () => {
       });
     } finally {
       setManagingSubscription(false);
+    }
+  };
+
+  const handleUpgrade = async (tier: string) => {
+    try {
+      if (isPersonalContext) {
+        // Personal checkout - to be implemented
+        toast({
+          title: "Coming Soon",
+          description: "Personal subscriptions will be available soon",
+        });
+      } else if (currentOrganization) {
+        const { data, error } = await supabase.functions.invoke("create-organization-checkout", {
+          body: { organization_id: currentOrganization.id, tier }
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.open(data.url, "_blank");
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create checkout session",
+        variant: "destructive",
+      });
     }
   };
 
@@ -364,7 +396,7 @@ const Billing = () => {
                         Priority support
                       </li>
                     </ul>
-                    <Button className="w-full">Upgrade to Team</Button>
+                    <Button className="w-full" onClick={() => handleUpgrade("team")}>Upgrade to Team</Button>
                   </CardContent>
                 </Card>
 
@@ -393,7 +425,7 @@ const Billing = () => {
                         SLA guarantee
                       </li>
                     </ul>
-                    <Button className="w-full">Upgrade to Enterprise</Button>
+                    <Button className="w-full" onClick={() => handleUpgrade("enterprise")}>Upgrade to Enterprise</Button>
                   </CardContent>
                 </Card>
               </div>

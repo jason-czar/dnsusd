@@ -201,7 +201,9 @@ export default function OrganizationSettings() {
 
   const handleManageBilling = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("manage-subscription");
+      const { data, error } = await supabase.functions.invoke("manage-organization-subscription", {
+        body: { organization_id: organizationId }
+      });
 
       if (error) throw error;
 
@@ -212,6 +214,26 @@ export default function OrganizationSettings() {
       toast({
         title: "Error",
         description: error.message || "Failed to open billing portal",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpgrade = async (tier: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-organization-checkout", {
+        body: { organization_id: organizationId, tier }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create checkout session",
         variant: "destructive",
       });
     }
@@ -360,13 +382,50 @@ export default function OrganizationSettings() {
                   </Button>
                 </>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
                     No active subscription. Upgrade to unlock team features.
                   </p>
-                  <Button onClick={() => navigate("/billing")}>
-                    View Plans
-                  </Button>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Team Plan</CardTitle>
+                        <CardDescription>For small to medium teams</CardDescription>
+                        <div className="text-2xl font-bold mt-2">$99<span className="text-sm font-normal text-muted-foreground">/month</span></div>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-1 text-sm mb-4">
+                          <li>• Up to 10 team members</li>
+                          <li>• Shared aliases</li>
+                          <li>• Team analytics</li>
+                          <li>• Priority support</li>
+                        </ul>
+                        <Button className="w-full" onClick={() => handleUpgrade("team")}>
+                          Upgrade to Team
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Enterprise Plan</CardTitle>
+                        <CardDescription>For large organizations</CardDescription>
+                        <div className="text-2xl font-bold mt-2">$299<span className="text-sm font-normal text-muted-foreground">/month</span></div>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-1 text-sm mb-4">
+                          <li>• Unlimited team members</li>
+                          <li>• Advanced RBAC</li>
+                          <li>• 24/7 dedicated support</li>
+                          <li>• SLA guarantee</li>
+                        </ul>
+                        <Button className="w-full" onClick={() => handleUpgrade("enterprise")}>
+                          Upgrade to Enterprise
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               )}
             </CardContent>

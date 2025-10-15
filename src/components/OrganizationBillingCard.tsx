@@ -49,7 +49,9 @@ export function OrganizationBillingCard({ organizationId }: OrganizationBillingC
 
   const handleManageBilling = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("manage-subscription");
+      const { data, error } = await supabase.functions.invoke("manage-organization-subscription", {
+        body: { organization_id: organizationId }
+      });
 
       if (error) throw error;
 
@@ -60,6 +62,26 @@ export function OrganizationBillingCard({ organizationId }: OrganizationBillingC
       toast({
         title: "Error",
         description: error.message || "Failed to open billing portal",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpgrade = async (tier: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-organization-checkout", {
+        body: { organization_id: organizationId, tier }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create checkout session",
         variant: "destructive",
       });
     }
@@ -96,7 +118,12 @@ export function OrganizationBillingCard({ organizationId }: OrganizationBillingC
               <li>Organization-level analytics</li>
               <li>Team activity logs</li>
             </ul>
-            <Button>View Team Plans</Button>
+            <div className="flex gap-2">
+              <Button onClick={() => handleUpgrade("team")}>Upgrade to Team</Button>
+              <Button variant="outline" onClick={() => handleUpgrade("enterprise")}>
+                Upgrade to Enterprise
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
