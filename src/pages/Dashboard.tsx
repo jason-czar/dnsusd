@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Home as HomeIcon, Bell, Code2, BarChart, Key, Settings, Building2, FileText } from "lucide-react";
+import { Plus, Search, Bell, Code2, BarChart, Key, Settings, Building2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import logo from "@/assets/logo.png";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -91,7 +92,11 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <HomeIcon className="h-6 w-6 text-primary" />
+              <img 
+                src={logo} 
+                alt="BlueKeyID Logo" 
+                className="h-10 w-10 rounded-lg"
+              />
               <h1 className="text-xl font-bold">BlueKeyID</h1>
             </div>
             <div className="w-64">
