@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
+import logo from "@/assets/logo.png";
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
@@ -162,6 +163,13 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
+          <div className="flex justify-center mb-4">
+            <img 
+              src={logo} 
+              alt="BlueKeyID Logo" 
+              className="w-16 h-16 rounded-lg"
+            />
+          </div>
           <CardTitle className="text-2xl font-bold text-center">BlueKeyID</CardTitle>
           <CardDescription className="text-center">
             Manage your crypto aliases and domains

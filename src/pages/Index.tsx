@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ResolverForm } from "@/components/ResolverForm";
 import { ResolutionResult } from "@/components/ResolutionResult";
-import { Shield, Zap, Home, Key } from "lucide-react";
+import { Shield, Zap, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { ResolverResult } from "@/types/resolver";
+import logo from "@/assets/logo.png";
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
@@ -33,9 +34,11 @@ const Index = () => {
         <div className="container mx-auto px-4 py-6">
           <nav className="flex items-center justify-between" aria-label="Main navigation">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Key className="w-8 h-8 text-primary" aria-hidden="true" />
-              </div>
+              <img 
+                src={logo} 
+                alt="BlueKeyID Logo" 
+                className="w-12 h-12 rounded-lg"
+              />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">BlueKeyID</h1>
                 <p className="text-sm text-muted-foreground">Universal Crypto Address Identity Verification</p>
